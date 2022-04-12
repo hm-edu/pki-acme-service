@@ -16,13 +16,29 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/go-cmp/cmp"
+	pb "github.com/hm-edu/portal-apis"
 	"github.com/pkg/errors"
 	"github.com/smallstep/assert"
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
+	"google.golang.org/grpc"
 )
+
+type MockClient struct {
+	Missing []string
+}
+
+func (c *MockClient) CheckPermission(ctx context.Context, in *pb.CheckPermissionRequest, opts ...grpc.CallOption) (*pb.CheckPermissionResponse, error) {
+	return &pb.CheckPermissionResponse{}, nil
+}
+func (c *MockClient) ListDomains(ctx context.Context, in *pb.ListDomainsRequest, opts ...grpc.CallOption) (*pb.ListDomainsResponse, error) {
+	return &pb.ListDomainsResponse{}, nil
+}
+func (c *MockClient) CheckRegistration(ctx context.Context, in *pb.CheckRegistrationRequest, opts ...grpc.CallOption) (*pb.CheckRegistrationResponse, error) {
+	return &pb.CheckRegistrationResponse{Missing: c.Missing}, nil
+}
 
 func TestHandler_GetNonce(t *testing.T) {
 	tests := []struct {

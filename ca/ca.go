@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -157,7 +158,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 	}
 	ca.auth = auth
 
-	tlsConfig, err := ca.getTLSConfig(auth)
+	tlsConfig, err := ca.getTLSConfig(auth, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -204,6 +205,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		DNS:      dns,
 		Prefix:   prefix,
 		CA:       auth,
+		Cfg:      cfg,
 	})
 	mux.Route("/"+prefix, func(r chi.Router) {
 		acmeHandler.Route(r)
@@ -432,9 +434,17 @@ func (ca *CA) Reload() error {
 
 // getTLSConfig returns a TLSConfig for the CA server with a self-renewing
 // server certificate.
-func (ca *CA) getTLSConfig(auth *authority.Authority) (*tls.Config, error) {
+func (ca *CA) getTLSConfig(auth *authority.Authority, cfg *config.Config) (*tls.Config, error) {
+
+	if cfg.Storage != "" {
+		err := os.Mkdir(cfg.Storage, 0600)
+		if err != nil && !os.IsExist(err) {
+			return nil, errors.Wrap(err, "error creating storage directory")
+		}
+	}
+
 	// Create initial TLS certificate
-	tlsCrt, err := auth.GetTLSCertificate()
+	tlsCrt, err := auth.GetTLSCertificate(cfg.Storage, false)
 	if err != nil {
 		return nil, err
 	}
@@ -445,7 +455,9 @@ func (ca *CA) getTLSConfig(auth *authority.Authority) (*tls.Config, error) {
 		ca.renewer.Stop()
 	}
 
-	ca.renewer, err = NewTLSRenewer(tlsCrt, auth.GetTLSCertificate)
+	ca.renewer, err = NewTLSRenewer(tlsCrt, func() (*tls.Certificate, error) {
+		return auth.GetTLSCertificate(cfg.Storage, true)
+	})
 	if err != nil {
 		return nil, err
 	}

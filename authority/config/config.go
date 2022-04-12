@@ -72,6 +72,8 @@ type Config struct {
 	Password         string               `json:"password,omitempty"`
 	Templates        *templates.Templates `json:"templates,omitempty"`
 	CommonName       string               `json:"commonName,omitempty"`
+	Storage          string               `json:"storage,omitempty"`
+	ManagementHost   string               `json:"managementHost"`
 }
 
 // ASN1DN contains ASN1.DN attributes that are used in Subject and Issuer

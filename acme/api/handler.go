@@ -12,11 +12,16 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-
+	pb "github.com/hm-edu/portal-apis"
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/api/render"
+	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	// Enable XDS Scheme
+	_ "google.golang.org/grpc/xds"
 )
 
 func link(url, typ string) string {
@@ -47,6 +52,7 @@ type Handler struct {
 	linker                   Linker
 	validateChallengeOptions *acme.ValidateChallengeOptions
 	prerequisitesChecker     func(ctx context.Context) (bool, error)
+	client                   pb.DomainServiceClient
 }
 
 // HandlerOptions required to create a new ACME API request handler.
@@ -67,6 +73,7 @@ type HandlerOptions struct {
 	// PrerequisitesChecker checks if all prerequisites for serving ACME are
 	// met by the CA configuration.
 	PrerequisitesChecker func(ctx context.Context) (bool, error)
+	Cfg                  *config.Config
 }
 
 // NewHandler returns a new ACME API handler.
@@ -90,11 +97,22 @@ func NewHandler(ops HandlerOptions) api.RouterHandler {
 	if ops.PrerequisitesChecker != nil {
 		prerequisitesChecker = ops.PrerequisitesChecker
 	}
+
+	// handle err
+	conn, _ := grpc.DialContext(
+		context.Background(),
+		ops.Cfg.ManagementHost,
+		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+
+	apiClient := pb.NewDomainServiceClient(conn)
 	return &Handler{
 		ca:       ops.CA,
 		db:       ops.DB,
 		backdate: ops.Backdate,
 		linker:   NewLinker(ops.DNS, ops.Prefix),
+		client:   apiClient,
 		validateChallengeOptions: &acme.ValidateChallengeOptions{
 			HTTPGet:   client.Get,
 			LookupTxt: net.LookupTXT,
@@ -317,4 +335,18 @@ func (h *Handler) GetCertificate(w http.ResponseWriter, r *http.Request) {
 	api.LogCertificate(w, cert.Leaf)
 	w.Header().Set("Content-Type", "application/pem-certificate-chain; charset=utf-8")
 	w.Write(certBytes)
+}
+
+func (h *Handler) checkPermission(ctx context.Context, identifiers []acme.Identifier) ([]string, error) {
+	var domains []string
+	for _, x := range identifiers {
+		if x.Type == acme.DNS {
+			domains = append(domains, x.Value)
+		}
+	}
+	result, err := h.client.CheckRegistration(ctx, &pb.CheckRegistrationRequest{Domains: domains})
+	if err != nil {
+		return nil, err
+	}
+	return result.Missing, nil
 }

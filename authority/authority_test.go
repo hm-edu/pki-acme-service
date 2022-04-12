@@ -303,9 +303,9 @@ func TestNewEmbedded_GetTLSCertificate(t *testing.T) {
 
 	a, err := NewEmbedded(WithX509RootBundle(caPEM), WithX509Signer(crt, key.(crypto.Signer)))
 	assert.FatalError(t, err)
-
+	name, _ := os.MkdirTemp("", "")
 	// GetTLSCertificate
-	cert, err := a.GetTLSCertificate()
+	cert, err := a.GetTLSCertificate(name, false)
 	assert.FatalError(t, err)
 	assert.Equals(t, []string{"localhost"}, cert.Leaf.DNSNames)
 	assert.True(t, cert.Leaf.IPAddresses[0].Equal(net.ParseIP("127.0.0.1")))

@@ -676,6 +676,7 @@ func TestHandler_NewOrder(t *testing.T) {
 		ctx        context.Context
 		nor        *NewOrderRequest
 		statusCode int
+		missing    []string
 		vr         func(t *testing.T, o *acme.Order)
 		err        *acme.Error
 	}
@@ -1084,6 +1085,27 @@ func TestHandler_NewOrder(t *testing.T) {
 					},
 				},
 				err: acme.NewErrorISE("error creating order: force"),
+			}
+		},
+		"fail/missingDomain": func(t *testing.T) test {
+			acc := &acme.Account{ID: "accID"}
+			nor := &NewOrderRequest{
+				Identifiers: []acme.Identifier{
+					{Type: "dns", Value: "zap.internal"},
+					{Type: "dns", Value: "*.zar.internal"},
+				},
+			}
+			b, err := json.Marshal(nor)
+			assert.FatalError(t, err)
+			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
+			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
+			return test{
+				ctx:        ctx,
+				statusCode: 400,
+				missing:    []string{"zap.internal"},
+				err:        acme.NewError(acme.ErrorRejectedIdentifierType, "account does not exist"),
 			}
 		},
 		"ok/multiple-authz": func(t *testing.T) test {
@@ -1702,6 +1724,7 @@ func TestHandler_NewOrder(t *testing.T) {
 		tc := run(t)
 		t.Run(name, func(t *testing.T) {
 			h := &Handler{linker: NewLinker("dns", "acme"), db: tc.db, ca: tc.ca}
+			h.client = &MockClient{tc.missing}
 			req := httptest.NewRequest("GET", u, nil)
 			req = req.WithContext(tc.ctx)
 			w := httptest.NewRecorder()

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -555,16 +556,49 @@ func (a *Authority) revokeSSH(crt *ssh.Certificate, rci *db.RevokedCertificateIn
 }
 
 // GetTLSCertificate creates a new leaf certificate to be used by the CA HTTPS server.
-func (a *Authority) GetTLSCertificate() (*tls.Certificate, error) {
+func (a *Authority) GetTLSCertificate(storage string, renew bool) (*tls.Certificate, error) {
 	fatal := func(err error) (*tls.Certificate, error) {
 		return nil, errs.Wrap(http.StatusInternalServerError, err, "authority.GetTLSCertificate")
 	}
+	var priv crypto.PrivateKey
+	data, err := os.ReadFile(fmt.Sprintf("%s/%s", storage, "ca.key"))
+	switch {
+	case err != nil && os.IsNotExist(err):
+		// Generate default key.
+		priv, err = keyutil.GenerateDefaultKey()
+		if err != nil {
+			return fatal(err)
+		}
+		pemutil.Serialize(priv, pemutil.ToFile(fmt.Sprintf("%s/%s", storage, "ca.key"), 0600))
+	case err != nil:
+		return fatal(err)
+	default:
+		priv, err = pemutil.ParseKey(data)
+		if err != nil {
+			return fatal(err)
+		}
+	}
 
-	// Generate default key.
-	priv, err := keyutil.GenerateDefaultKey()
+	keyPEM, err := pemutil.Serialize(priv)
 	if err != nil {
 		return fatal(err)
 	}
+	data, err = os.ReadFile(fmt.Sprintf("%s/%s", storage, "ca.crt"))
+
+	if !renew && err == nil {
+		cert, err := pemutil.ParseCertificateBundle(data)
+		if err != nil {
+			return fatal(err)
+		} else if cert[0].NotAfter.After(time.Now().Add(7 * 24 * time.Hour)) {
+			tlsCrt, err := tls.X509KeyPair(data, pem.EncodeToMemory(keyPEM))
+			if err != nil {
+				return fatal(err)
+			}
+			tlsCrt.Leaf = cert[0]
+			return &tlsCrt, nil
+		}
+	}
+
 	signer, ok := priv.(crypto.Signer)
 	if !ok {
 		return fatal(errors.New("private key is not a crypto.Signer"))
@@ -620,10 +654,6 @@ func (a *Authority) GetTLSCertificate() (*tls.Certificate, error) {
 			Bytes: crt.Raw,
 		})...)
 	}
-	keyPEM, err := pemutil.Serialize(priv)
-	if err != nil {
-		return fatal(err)
-	}
 
 	tlsCrt, err := tls.X509KeyPair(pemBlocks, pem.EncodeToMemory(keyPEM))
 	if err != nil {
@@ -631,7 +661,9 @@ func (a *Authority) GetTLSCertificate() (*tls.Certificate, error) {
 	}
 	// Set leaf certificate
 	tlsCrt.Leaf = resp.Certificate
+	os.WriteFile(fmt.Sprintf("%s/%s", storage, "ca.crt"), pemBlocks, 0600)
 	return &tlsCrt, nil
+
 }
 
 // templatingError tries to extract more information about the cause of

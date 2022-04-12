@@ -157,6 +157,15 @@ func (h *Handler) NewOrder(w http.ResponseWriter, r *http.Request) {
 		NotAfter:         nor.NotAfter,
 	}
 
+	if missing, err := h.checkPermission(ctx, o.Identifiers); len(missing) != 0 || err != nil {
+		if err != nil {
+			render.Error(w, acme.NewError(acme.ErrorServerInternalType, "Internal server error"))
+			return
+		}
+		render.Error(w, acme.NewError(acme.ErrorRejectedIdentifierType, "Missing registration for domain(s) %v", missing))
+		return
+	}
+
 	for i, identifier := range o.Identifiers {
 		az := &acme.Authorization{
 			AccountID:  acc.ID,
@@ -327,6 +336,7 @@ func (h *Handler) FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 			"provisioner '%s' does not own order '%s'", prov.GetID(), o.ID))
 		return
 	}
+
 	if err = o.Finalize(ctx, h.db, fr.csr, h.ca, prov); err != nil {
 		render.Error(w, acme.WrapErrorISE(err, "error finalizing order"))
 		return
