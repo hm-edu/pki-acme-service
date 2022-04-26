@@ -289,6 +289,15 @@ func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request) {
 	h.linker.LinkOrder(ctx, o)
 
 	w.Header().Set("Location", h.linker.GetLink(ctx, OrderLinkType, o.ID))
+	if o.Status == acme.StatusProcessing {
+		// Due to the bad behavior of the k8s cert-manager we must catch this client using the User-Agent and handle it in a special way.
+		// The cert-manager does not repect the retry after flags and will retry too fast.
+		if strings.Contains(r.UserAgent(), "cert-manager") {
+			render.Error(w, acme.NewErrorISE("Request is processing"))
+			return
+		}
+		w.Header().Set("Retry-After", "15")
+	}
 	render.JSON(w, o)
 }
 
@@ -337,7 +346,7 @@ func (h *Handler) FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = o.Finalize(ctx, h.db, fr.csr, h.ca, prov); err != nil {
+	if _, err = o.Finalize(ctx, h.db, fr.csr, h.ca, prov); err != nil {
 		render.Error(w, acme.WrapErrorISE(err, "error finalizing order"))
 		return
 	}
@@ -345,6 +354,7 @@ func (h *Handler) FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 	h.linker.LinkOrder(ctx, o)
 
 	w.Header().Set("Location", h.linker.GetLink(ctx, OrderLinkType, o.ID))
+	w.Header().Set("Retry-After", "30")
 	render.JSON(w, o)
 }
 

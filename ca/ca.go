@@ -1,9 +1,13 @@
 package ca
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
 	"log"
 	"net/http"
 	"net/url"
@@ -30,6 +34,11 @@ import (
 	"github.com/smallstep/nosql"
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/crypto/x509util"
+
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
 type options struct {
@@ -123,6 +132,7 @@ type CA struct {
 	insecureSrv *server.Server
 	opts        *options
 	renewer     *TLSRenewer
+	tp          *sdktrace.TracerProvider
 }
 
 // New creates and initializes the CA with the given configuration and options.
@@ -137,6 +147,22 @@ func New(cfg *config.Config, opts ...Option) (*CA, error) {
 
 // Init initializes the CA with the given configuration.
 func (ca *CA) Init(cfg *config.Config) (*CA, error) {
+	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint())
+	if err != nil {
+		return nil, err
+	}
+	ca.tp = sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(
+			resource.NewWithAttributes(
+				semconv.SchemaURL,
+				semconv.ServiceNameKey.String("certificates"),
+			)),
+	)
+	otel.SetTracerProvider(ca.tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+
 	// Set password, it's ok to set nil password, the ca will prompt for them if
 	// they are required.
 	opts := []authority.Option{
@@ -170,9 +196,6 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 
 	insecureMux := chi.NewRouter()
 	insecureHandler := http.Handler(insecureMux)
-
-	publicMux := chi.NewRouter()
-	publicHandler := http.Handler(publicMux)
 
 	// Add regular CA api endpoints in / and /1.0
 	routerHandler := api.New(auth)
@@ -219,15 +242,19 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 	mux.Route("/2.0/"+prefix, func(r chi.Router) {
 		acmeHandler.Route(r)
 	})
-	publicMux.Route("/"+prefix, func(r chi.Router) {
-		acmeHandler.Route(r)
-	})
-	// Use 2.0 because, at the moment, our ACME api is only compatible with v2.0
-	// of the ACME spec.
-	publicMux.Route("/2.0/"+prefix, func(r chi.Router) {
-		acmeHandler.Route(r)
-	})
-
+	var publicHandler http.Handler
+	if cfg.PublicAddress != "" {
+		publicMux := chi.NewRouter()
+		publicHandler = http.Handler(publicMux)
+		publicMux.Route("/"+prefix, func(r chi.Router) {
+			acmeHandler.Route(r)
+		})
+		// Use 2.0 because, at the moment, our ACME api is only compatible with v2.0
+		// of the ACME spec.
+		publicMux.Route("/2.0/"+prefix, func(r chi.Router) {
+			acmeHandler.Route(r)
+		})
+	}
 	// Admin API Router
 	if cfg.AuthorityConfig.EnableAdmin {
 		adminDB := auth.GetAdminDatabase()
@@ -282,7 +309,9 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		}
 		handler = m.Middleware(handler)
 		insecureHandler = m.Middleware(insecureHandler)
-		publicHandler = m.Middleware(publicHandler)
+		if cfg.PublicAddress != "" {
+			publicHandler = m.Middleware(publicHandler)
+		}
 	}
 
 	// Add logger if configured
@@ -293,11 +322,15 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		}
 		handler = logger.Middleware(handler)
 		insecureHandler = logger.Middleware(insecureHandler)
-		publicHandler = logger.Middleware(publicHandler)
+		if cfg.PublicAddress != "" {
+			publicHandler = logger.Middleware(publicHandler)
+		}
 	}
 
 	ca.srv = server.New(cfg.Address, handler, tlsConfig)
-	ca.public = server.New(cfg.PublicAddress, publicHandler, tlsConfig)
+	if cfg.PublicAddress != "" {
+		ca.public = server.New(cfg.PublicAddress, publicHandler, tlsConfig)
+	}
 	// only start the insecure server if the insecure address is configured
 	// and, currently, also only when it should serve SCEP endpoints.
 	if ca.shouldServeSCEPEndpoints() && cfg.InsecureAddress != "" {
@@ -359,10 +392,12 @@ func (ca *CA) Run() error {
 		errs <- ca.srv.ListenAndServe()
 	}()
 	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		errs <- ca.public.ListenAndServe()
-	}()
+	if ca.public != nil {
+		go func() {
+			defer wg.Done()
+			errs <- ca.public.ListenAndServe()
+		}()
+	}
 
 	// wait till error occurs; ensures the servers keep listening
 	err := <-errs
@@ -379,14 +414,19 @@ func (ca *CA) Stop() error {
 		log.Printf("error stopping ca.Authority: %+v\n", err)
 	}
 	var insecureShutdownErr error
+	var publicErr error
 	if ca.insecureSrv != nil {
 		insecureShutdownErr = ca.insecureSrv.Shutdown()
 	}
 
+	if ca.public != nil {
+		publicErr = ca.public.Shutdown()
+	}
 	secureErr := ca.srv.Shutdown()
-
-	publicErr := ca.public.Shutdown()
-
+	err := ca.tp.Shutdown(context.Background())
+	if err != nil {
+		return err
+	}
 	if insecureShutdownErr != nil {
 		return insecureShutdownErr
 	}
@@ -442,10 +482,11 @@ func (ca *CA) Reload() error {
 		logContinue("Reload failed because server could not be replaced.")
 		return errors.Wrap(err, "error reloading server")
 	}
-
-	if err = ca.public.Reload(newCA.public); err != nil {
-		logContinue("Reload failed because server could not be replaced.")
-		return errors.Wrap(err, "error reloading server")
+	if ca.public != nil {
+		if err = ca.public.Reload(newCA.public); err != nil {
+			logContinue("Reload failed because server could not be replaced.")
+			return errors.Wrap(err, "error reloading server")
+		}
 	}
 
 	// 1. Stop previous renewer

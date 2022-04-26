@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/smallstep/certificates/authority/provisioner"
 	"go.step.sm/crypto/x509util"
 )
@@ -62,6 +64,8 @@ func (o *Order) UpdateStatus(ctx context.Context, db DB) error {
 	now := clock.Now()
 
 	switch o.Status {
+	case StatusProcessing:
+		return nil
 	case StatusInvalid:
 		return nil
 	case StatusValid:
@@ -124,22 +128,29 @@ func (o *Order) UpdateStatus(ctx context.Context, db DB) error {
 
 // Finalize signs a certificate if the necessary conditions for Order completion
 // have been met.
-func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateRequest, auth CertificateAuthority, p Provisioner) error {
+func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateRequest, auth CertificateAuthority, p Provisioner) (chan error, error) {
 	if err := o.UpdateStatus(ctx, db); err != nil {
-		return err
+		return nil, err
 	}
 
 	switch o.Status {
 	case StatusInvalid:
-		return NewError(ErrorOrderNotReadyType, "order %s has been abandoned", o.ID)
+		return nil, NewError(ErrorOrderNotReadyType, "order %s has been abandoned", o.ID)
 	case StatusValid:
-		return nil
+		return nil, nil
 	case StatusPending:
-		return NewError(ErrorOrderNotReadyType, "order %s is not ready", o.ID)
+		return nil, NewError(ErrorOrderNotReadyType, "order %s is not ready", o.ID)
 	case StatusReady:
 		break
+	case StatusProcessing:
+		return nil, NewErrorISE("order %s is already processing", o.ID)
 	default:
-		return NewErrorISE("unexpected status %s for order %s", o.Status, o.ID)
+		return nil, NewErrorISE("unexpected status %s for order %s", o.Status, o.ID)
+	}
+
+	o.Status = StatusProcessing
+	if err := db.UpdateOrder(ctx, o); err != nil {
+		return nil, WrapErrorISE(err, "error updating order %s", o.ID)
 	}
 
 	// canonicalize the CSR to allow for comparison
@@ -148,14 +159,14 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 	// retrieve the requested SANs for the Order
 	sans, err := o.sans(csr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Get authorizations from the ACME provisioner.
 	ctx = provisioner.NewContextWithMethod(ctx, provisioner.SignMethod)
 	signOps, err := p.AuthorizeSign(ctx, "")
 	if err != nil {
-		return WrapErrorISE(err, "error retrieving authorization options from ACME provisioner")
+		return nil, WrapErrorISE(err, "error retrieving authorization options from ACME provisioner")
 	}
 
 	// Template data
@@ -165,35 +176,50 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 
 	templateOptions, err := provisioner.TemplateOptions(p.GetOptions(), data)
 	if err != nil {
-		return WrapErrorISE(err, "error creating template options from ACME provisioner")
+		return nil, WrapErrorISE(err, "error creating template options from ACME provisioner")
 	}
 	signOps = append(signOps, templateOptions)
+	ch := make(chan error)
+	go func() {
+		// Sign a new certificate.
+		certChain, err := auth.Sign(csr, provisioner.SignOptions{
+			NotBefore: provisioner.NewTimeDuration(o.NotBefore),
+			NotAfter:  provisioner.NewTimeDuration(o.NotAfter),
+		}, signOps...)
+		if err != nil {
+			zap.L().Error("error signing certificate for order", zap.String("order", o.ID), zap.Error(err))
+			o.Status = StatusInvalid
+			ch <- WrapErrorISE(err, "error signing certificate for order %s", o.ID)
+			if err = db.UpdateOrder(ctx, o); err != nil {
+				zap.L().Error("error updating order", zap.String("order", o.ID), zap.Error(err))
+			}
+			return
+		}
 
-	// Sign a new certificate.
-	certChain, err := auth.Sign(csr, provisioner.SignOptions{
-		NotBefore: provisioner.NewTimeDuration(o.NotBefore),
-		NotAfter:  provisioner.NewTimeDuration(o.NotAfter),
-	}, signOps...)
-	if err != nil {
-		return WrapErrorISE(err, "error signing certificate for order %s", o.ID)
-	}
+		cert := &Certificate{
+			AccountID:     o.AccountID,
+			OrderID:       o.ID,
+			Leaf:          certChain[0],
+			Intermediates: certChain[1:],
+		}
+		if err := db.CreateCertificate(ctx, cert); err != nil {
+			zap.L().Error("error creating certificate", zap.String("order", o.ID), zap.Error(err))
+			o.Status = StatusInvalid
+			ch <- WrapErrorISE(err, "error creating certificate for order %s", o.ID)
+			if err = db.UpdateOrder(ctx, o); err != nil {
+				zap.L().Error("error updating order", zap.String("order", o.ID), zap.Error(err))
+			}
+			return
+		}
 
-	cert := &Certificate{
-		AccountID:     o.AccountID,
-		OrderID:       o.ID,
-		Leaf:          certChain[0],
-		Intermediates: certChain[1:],
-	}
-	if err := db.CreateCertificate(ctx, cert); err != nil {
-		return WrapErrorISE(err, "error creating certificate for order %s", o.ID)
-	}
-
-	o.CertificateID = cert.ID
-	o.Status = StatusValid
-	if err = db.UpdateOrder(ctx, o); err != nil {
-		return WrapErrorISE(err, "error updating order %s", o.ID)
-	}
-	return nil
+		o.CertificateID = cert.ID
+		o.Status = StatusValid
+		if err = db.UpdateOrder(ctx, o); err != nil {
+			zap.L().Error("error updating order", zap.String("order", o.ID), zap.Error(err))
+			ch <- WrapErrorISE(err, "error updating order %s", o.ID)
+		}
+	}()
+	return ch, nil
 }
 
 func (o *Order) sans(csr *x509.CertificateRequest) ([]x509util.SubjectAlternativeName, error) {

@@ -18,10 +18,9 @@ import (
 	"github.com/smallstep/certificates/api/render"
 	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	// Enable XDS Scheme
-	_ "google.golang.org/grpc/xds"
 )
 
 func link(url, typ string) string {
@@ -102,8 +101,8 @@ func NewHandler(ops HandlerOptions) api.RouterHandler {
 	conn, _ := grpc.DialContext(
 		context.Background(),
 		ops.Cfg.ManagementHost,
-		grpc.WithBlock(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 	)
 
 	apiClient := pb.NewDomainServiceClient(conn)
