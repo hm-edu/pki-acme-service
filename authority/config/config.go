@@ -60,6 +60,7 @@ type Config struct {
 	IntermediateCert string               `json:"crt"`
 	IntermediateKey  string               `json:"key"`
 	Address          string               `json:"address"`
+	PublicAddress    string               `json:"publicAddress"`
 	InsecureAddress  string               `json:"insecureAddress"`
 	DNSNames         []string             `json:"dnsNames"`
 	KMS              *kms.Options         `json:"kms,omitempty"`

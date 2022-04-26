@@ -1104,6 +1104,7 @@ func TestHandler_NewOrder(t *testing.T) {
 			return test{
 				ctx:        ctx,
 				statusCode: 400,
+				ca:         &mockCA{},
 				missing:    []string{"zap.internal"},
 				err:        acme.NewError(acme.ErrorRejectedIdentifierType, "account does not exist"),
 			}
@@ -1724,7 +1725,7 @@ func TestHandler_NewOrder(t *testing.T) {
 		tc := run(t)
 		t.Run(name, func(t *testing.T) {
 			h := &Handler{linker: NewLinker("dns", "acme"), db: tc.db, ca: tc.ca}
-			h.client = &MockClient{tc.missing}
+			h.client = &MockClient{Missing: tc.missing}
 			req := httptest.NewRequest("GET", u, nil)
 			req = req.WithContext(tc.ctx)
 			w := httptest.NewRecorder()

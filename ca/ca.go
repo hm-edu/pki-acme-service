@@ -119,6 +119,7 @@ type CA struct {
 	auth        *authority.Authority
 	config      *config.Config
 	srv         *server.Server
+	public      *server.Server
 	insecureSrv *server.Server
 	opts        *options
 	renewer     *TLSRenewer
@@ -170,6 +171,9 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 	insecureMux := chi.NewRouter()
 	insecureHandler := http.Handler(insecureMux)
 
+	publicMux := chi.NewRouter()
+	publicHandler := http.Handler(publicMux)
+
 	// Add regular CA api endpoints in / and /1.0
 	routerHandler := api.New(auth)
 	routerHandler.Route(mux)
@@ -213,6 +217,14 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 	// Use 2.0 because, at the moment, our ACME api is only compatible with v2.0
 	// of the ACME spec.
 	mux.Route("/2.0/"+prefix, func(r chi.Router) {
+		acmeHandler.Route(r)
+	})
+	publicMux.Route("/"+prefix, func(r chi.Router) {
+		acmeHandler.Route(r)
+	})
+	// Use 2.0 because, at the moment, our ACME api is only compatible with v2.0
+	// of the ACME spec.
+	publicMux.Route("/2.0/"+prefix, func(r chi.Router) {
 		acmeHandler.Route(r)
 	})
 
@@ -270,6 +282,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		}
 		handler = m.Middleware(handler)
 		insecureHandler = m.Middleware(insecureHandler)
+		publicHandler = m.Middleware(publicHandler)
 	}
 
 	// Add logger if configured
@@ -280,10 +293,11 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		}
 		handler = logger.Middleware(handler)
 		insecureHandler = logger.Middleware(insecureHandler)
+		publicHandler = logger.Middleware(publicHandler)
 	}
 
 	ca.srv = server.New(cfg.Address, handler, tlsConfig)
-
+	ca.public = server.New(cfg.PublicAddress, publicHandler, tlsConfig)
 	// only start the insecure server if the insecure address is configured
 	// and, currently, also only when it should serve SCEP endpoints.
 	if ca.shouldServeSCEPEndpoints() && cfg.InsecureAddress != "" {
@@ -344,6 +358,11 @@ func (ca *CA) Run() error {
 		defer wg.Done()
 		errs <- ca.srv.ListenAndServe()
 	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		errs <- ca.public.ListenAndServe()
+	}()
 
 	// wait till error occurs; ensures the servers keep listening
 	err := <-errs
@@ -366,8 +385,13 @@ func (ca *CA) Stop() error {
 
 	secureErr := ca.srv.Shutdown()
 
+	publicErr := ca.public.Shutdown()
+
 	if insecureShutdownErr != nil {
 		return insecureShutdownErr
+	}
+	if publicErr != nil {
+		return publicErr
 	}
 	return secureErr
 }
@@ -415,6 +439,11 @@ func (ca *CA) Reload() error {
 	}
 
 	if err = ca.srv.Reload(newCA.srv); err != nil {
+		logContinue("Reload failed because server could not be replaced.")
+		return errors.Wrap(err, "error reloading server")
+	}
+
+	if err = ca.public.Reload(newCA.public); err != nil {
 		logContinue("Reload failed because server could not be replaced.")
 		return errors.Wrap(err, "error reloading server")
 	}
