@@ -5,9 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/resource"
 	"log"
 	"net/http"
 	"net/url"
@@ -15,6 +12,10 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+
+	"go.opentelemetry.io/contrib/propagators/b3"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/sdk/resource"
 
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
@@ -161,7 +162,8 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 			)),
 	)
 	otel.SetTracerProvider(ca.tp)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+
+	otel.SetTextMapPropagator(b3.New())
 
 	// Set password, it's ok to set nil password, the ca will prompt for them if
 	// they are required.
