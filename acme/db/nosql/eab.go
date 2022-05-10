@@ -119,7 +119,6 @@ func (db *DB) GetExternalAccountKey(ctx context.Context, provisionerID, keyID st
 	if dbeak.ProvisionerID != provisionerID {
 		return nil, acme.NewError(acme.ErrorUnauthorizedType, "provisioner does not match provisioner for which the EAB key was created")
 	}
-
 	return &acme.ExternalAccountKey{
 		ID:            dbeak.ID,
 		ProvisionerID: dbeak.ProvisionerID,

@@ -10,8 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"go.uber.org/zap"
-
+	"github.com/sirupsen/logrus"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"go.step.sm/crypto/x509util"
 )
@@ -187,11 +186,11 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 			NotAfter:  provisioner.NewTimeDuration(o.NotAfter),
 		}, signOps...)
 		if err != nil {
-			zap.L().Error("error signing certificate for order", zap.String("order", o.ID), zap.Error(err))
+			logrus.WithError(err).Error("error signing certificate")
 			o.Status = StatusInvalid
 			ch <- WrapErrorISE(err, "error signing certificate for order %s", o.ID)
 			if err = db.UpdateOrder(ctx, o); err != nil {
-				zap.L().Error("error updating order", zap.String("order", o.ID), zap.Error(err))
+				logrus.WithError(err).Error("error updating order")
 			}
 			return
 		}
@@ -203,11 +202,11 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 			Intermediates: certChain[1:],
 		}
 		if err := db.CreateCertificate(ctx, cert); err != nil {
-			zap.L().Error("error creating certificate", zap.String("order", o.ID), zap.Error(err))
+			logrus.WithError(err).Error("error creating certificate")
 			o.Status = StatusInvalid
 			ch <- WrapErrorISE(err, "error creating certificate for order %s", o.ID)
 			if err = db.UpdateOrder(ctx, o); err != nil {
-				zap.L().Error("error updating order", zap.String("order", o.ID), zap.Error(err))
+				logrus.WithError(err).Error("error updating order")
 			}
 			return
 		}
@@ -215,7 +214,7 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 		o.CertificateID = cert.ID
 		o.Status = StatusValid
 		if err = db.UpdateOrder(ctx, o); err != nil {
-			zap.L().Error("error updating order", zap.String("order", o.ID), zap.Error(err))
+			logrus.WithError(err).Error("error updating order")
 			ch <- WrapErrorISE(err, "error updating order %s", o.ID)
 		}
 	}()

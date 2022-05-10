@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	pb "github.com/hm-edu/portal-apis"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/smallstep/certificates/cas/apiv1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -36,39 +35,7 @@ func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 	}
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	level := zap.NewAtomicLevelAt(zapcore.InfoLevel)
 
-	zapEncoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "ts",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-	}
-
-	zapConfig := zap.Config{
-		Level:       level,
-		Development: false,
-		Sampling: &zap.SamplingConfig{
-			Initial:    100,
-			Thereafter: 100,
-		},
-		Encoding:         "json",
-		EncoderConfig:    zapEncoderConfig,
-		OutputPaths:      []string{"stderr"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
-	logger, err := zapConfig.Build()
-	if err != nil {
-		return nil, err
-	}
-	zap.ReplaceGlobals(logger)
 	conn, err := grpc.DialContext(
 		ctx,
 		config.PKIBackend,
@@ -81,12 +48,12 @@ func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 	}
 	apiClient := pb.NewSSLServiceClient(conn)
 
-	return &SectigoCAS{client: apiClient, logger: logger}, nil
+	return &SectigoCAS{client: apiClient, logger: logrus.StandardLogger()}, nil
 }
 
 type SectigoCAS struct {
 	client pb.SSLServiceClient
-	logger *zap.Logger
+	logger *logrus.Logger
 }
 
 func parseCertificates(cert []byte) ([]*x509.Certificate, error) {
@@ -121,12 +88,12 @@ func (s *SectigoCAS) signCertificate(cr *x509.CertificateRequest) (*x509.Certifi
 		Csr:                     string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: cr.Raw})),
 	})
 	if err != nil {
-		s.logger.Error("Failed to issue certificate", zap.Error(err))
+		s.logger.WithField("error", err).Error("Failed to sign certificate")
 		return nil, nil, err
 	}
 	certs, err := parseCertificates([]byte(certificates.Certificate))
 	if err != nil {
-		s.logger.Error("Failed to parse certificate", zap.Error(err))
+		s.logger.WithField("error", err).Error("Failed to parse certificate")
 		return nil, nil, err
 	}
 	return certs[0], certs[1:], nil
@@ -135,7 +102,6 @@ func (s *SectigoCAS) signCertificate(cr *x509.CertificateRequest) (*x509.Certifi
 func (s *SectigoCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
 	cert, chain, err := s.signCertificate(req.CSR)
 	if err != nil {
-		s.logger.Error("Failed to sign certificate", zap.Error(err))
 		return nil, err
 	}
 	return &apiv1.CreateCertificateResponse{
@@ -147,7 +113,6 @@ func (s *SectigoCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*ap
 func (s *SectigoCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
 	cert, chain, err := s.signCertificate(req.CSR)
 	if err != nil {
-		s.logger.Error("Failed to sign certificate", zap.Error(err))
 		return nil, err
 	}
 	return &apiv1.RenewCertificateResponse{
@@ -162,7 +127,7 @@ func (s *SectigoCAS) RevokeCertificate(req *apiv1.RevokeCertificateRequest) (*ap
 		Reason:     req.Reason,
 	})
 	if err != nil {
-		s.logger.Error("Failed to revoke certificate", zap.Error(err))
+		s.logger.WithField("error", err).Error("Failed to revoke certificate")
 		return nil, err
 	}
 
