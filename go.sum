@@ -452,6 +452,8 @@ github.com/hashicorp/vault/sdk v0.4.1 h1:3SaHOJY687jY1fnB61PtL0cOkKItphrbLmux7T9
 github.com/hashicorp/vault/sdk v0.4.1/go.mod h1:aZ3fNuL5VNydQk8GcLJ2TV8YCRVvyaakYkhZRoVuhj0=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb h1:b5rjCoWHc7eqmAS4/qyk21ZsHyb6Mxv/jykxvNTkU4M=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
+github.com/hm-edu/nosql v0.4.1-0.20220510094234-1fbe0ffbb194 h1:4wA73z2RPNS7+b/Jqq1XArLfgavlCYqXr6imJZD9LnM=
+github.com/hm-edu/nosql v0.4.1-0.20220510094234-1fbe0ffbb194/go.mod h1:yKZT5h7cdIVm6wEKM9+jN5dgK80Hljpuy8HNsnI7Gzo=
 github.com/hm-edu/portal-apis v0.0.0-20220418065733-1039af5d96e1 h1:/sUwNyoQTez1eUYSNpW2ecxYD6wKtCYJcbKiO2ZDSIE=
 github.com/hm-edu/portal-apis v0.0.0-20220418065733-1039af5d96e1/go.mod h1:m5sljdCnWRuLK4HUFJaC+dz6WfRjg47gS47Yai5Wdrw=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
@@ -704,8 +706,6 @@ github.com/slackhq/nebula v1.5.2/go.mod h1:xaCM6wqbFk/NRmmUe1bv88fWBm3a1UioXJVIp
 github.com/smallstep/assert v0.0.0-20180720014142-de77670473b5/go.mod h1:TC9A4+RjIOS+HyTH7wG17/gSqVv95uDw2J64dQZx7RE=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1/1fApl1A+9VcBk+9dcqGfnePY87LY=
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
-github.com/smallstep/nosql v0.4.0 h1:Go3WYwttUuvwqMtFiiU4g7kBIlY+hR0bIZAqVdakQ3M=
-github.com/smallstep/nosql v0.4.0/go.mod h1:yKZT5h7cdIVm6wEKM9+jN5dgK80Hljpuy8HNsnI7Gzo=
 github.com/smallstep/pkcs7 v0.0.0-20211016004704-52592125d6f6 h1:8Rjy6IZbSM/jcYgBWCoLIGjug7QcoLtF9sUuhDrHD2U=
 github.com/smallstep/pkcs7 v0.0.0-20211016004704-52592125d6f6/go.mod h1:SNgMg+EgDFwmvSmLRTNKC5fegJjB7v23qTQ0XLGUNHk=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
