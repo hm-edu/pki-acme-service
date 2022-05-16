@@ -135,7 +135,7 @@ func (h *Handler) NewAccount(w http.ResponseWriter, r *http.Request) {
 				render.Error(w, err)
 				return
 			}
-			if err := h.db.UpdateExternalAccountKey(ctx, prov.ID, eak); err != nil {
+			if err := h.db.UpdateExternalAccountKey(ctx, prov.GetID(), eak); err != nil {
 				render.Error(w, acme.WrapErrorISE(err, "error updating external account binding key"))
 				return
 			}

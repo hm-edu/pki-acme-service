@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"time"
@@ -338,6 +339,7 @@ func (h *Handler) GetCertificate(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) checkPermission(ctx context.Context, identifiers []acme.Identifier, eab *acme.ExternalAccountKey) ([]string, error) {
 	if eab == nil {
+		logrus.Info("No external account key given. Cannot check permissions")
 		return nil, nil
 	}
 	var domains []string
