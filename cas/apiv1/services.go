@@ -1,6 +1,7 @@
 package apiv1
 
 import (
+	"context"
 	"crypto/x509"
 	"net/http"
 	"strings"
@@ -9,9 +10,9 @@ import (
 // CertificateAuthorityService is the interface implemented to support external
 // certificate authorities.
 type CertificateAuthorityService interface {
-	CreateCertificate(req *CreateCertificateRequest) (*CreateCertificateResponse, error)
-	RenewCertificate(req *RenewCertificateRequest) (*RenewCertificateResponse, error)
-	RevokeCertificate(req *RevokeCertificateRequest) (*RevokeCertificateResponse, error)
+	CreateCertificate(context context.Context, req *CreateCertificateRequest) (*CreateCertificateResponse, error)
+	RenewCertificate(context context.Context, req *RenewCertificateRequest) (*RenewCertificateResponse, error)
+	RevokeCertificate(context context.Context, req *RevokeCertificateRequest) (*RevokeCertificateResponse, error)
 }
 
 // CertificateAuthorityGetter is an interface implemented by a

@@ -327,7 +327,7 @@ func (h *caHandler) SSHSign(w http.ResponseWriter, r *http.Request) {
 			NotAfter:  time.Unix(int64(cert.ValidBefore), 0),
 		})
 
-		certChain, err := h.Authority.Sign(cr, provisioner.SignOptions{}, signOpts...)
+		certChain, err := h.Authority.Sign(context.Background(), cr, provisioner.SignOptions{}, signOpts...)
 		if err != nil {
 			render.Error(w, errs.ForbiddenErr(err, "error signing identity certificate"))
 			return

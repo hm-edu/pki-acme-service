@@ -50,7 +50,7 @@ func New(ctx context.Context, opts apiv1.Options) (*SoftCAS, error) {
 }
 
 // CreateCertificate signs a new certificate using Golang or KMS crypto.
-func (c *SoftCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
+func (c *SoftCAS) CreateCertificate(_ context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
 	switch {
 	case req.Template == nil:
 		return nil, errors.New("createCertificateRequest `template` cannot be nil")
@@ -86,7 +86,7 @@ func (c *SoftCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1
 }
 
 // RenewCertificate signs the given certificate template using Golang or KMS crypto.
-func (c *SoftCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
+func (c *SoftCAS) RenewCertificate(_ context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
 	switch {
 	case req.Template == nil:
 		return nil, errors.New("createCertificateRequest `template` cannot be nil")
@@ -118,7 +118,7 @@ func (c *SoftCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.R
 // RevokeCertificate revokes the given certificate in step-ca. In SoftCAS this
 // operation is a no-op as the actual revoke will happen when we store the entry
 // in the db.
-func (c *SoftCAS) RevokeCertificate(req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+func (c *SoftCAS) RevokeCertificate(_ context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
 	chain, _, err := c.getCertSigner()
 	if err != nil {
 		return nil, err

@@ -23,7 +23,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.1.1
 	github.com/hashicorp/vault/api v1.5.0
 	github.com/hashicorp/vault/api/auth/approle v0.1.1
-	github.com/hm-edu/portal-apis v0.0.0-20220516061919-a4ea5ed352fe
+	github.com/hm-edu/portal-apis v0.0.0-20220517041651-934dc36f0473
 	github.com/micromdm/scep/v2 v2.1.0
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/newrelic/go-agent v2.15.0+incompatible
@@ -40,7 +40,7 @@ require (
 	go.step.sm/crypto v0.16.2
 	go.step.sm/linkedca v0.16.1
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
-	golang.org/x/net v0.0.0-20220513224357-95641704303c
+	golang.org/x/net v0.0.0-20220516155154-20f960328961
 	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a // indirect
 	google.golang.org/api v0.70.0
 	google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3

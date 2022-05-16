@@ -181,7 +181,7 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 	ch := make(chan error)
 	go func() {
 		// Sign a new certificate.
-		certChain, err := auth.Sign(csr, provisioner.SignOptions{
+		certChain, err := auth.Sign(ctx, csr, provisioner.SignOptions{
 			NotBefore: provisioner.NewTimeDuration(o.NotBefore),
 			NotAfter:  provisioner.NewTimeDuration(o.NotAfter),
 		}, signOps...)

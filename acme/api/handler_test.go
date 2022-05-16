@@ -34,6 +34,10 @@ func (c *MockClient) CheckEABPermissions(ctx context.Context, in *pb.CheckEABPer
 	return &pb.CheckEABPermissionResponse{Missing: c.Missing}, nil
 }
 
+func (c *MockClient) ResolveAccountId(ctx context.Context, in *pb.ResolveAccountIdRequest, opts ...grpc.CallOption) (*pb.ResolveAccountIdResponse, error) {
+	return nil, nil
+}
+
 func TestHandler_GetNonce(t *testing.T) {
 	tests := []struct {
 		name       string

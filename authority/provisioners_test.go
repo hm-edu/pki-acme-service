@@ -136,7 +136,7 @@ func TestAuthority_LoadProvisionerByCertificate(t *testing.T) {
 		opts, err := a.Authorize(ctx, token)
 		assert.FatalError(t, err)
 		opts = append(opts, extraOpts...)
-		certs, err := a.Sign(csr, provisioner.SignOptions{}, opts...)
+		certs, err := a.Sign(context.TODO(), csr, provisioner.SignOptions{}, opts...)
 		assert.FatalError(t, err)
 		return certs[0]
 	}

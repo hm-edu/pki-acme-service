@@ -281,7 +281,7 @@ type mockCA struct {
 	MockAreSANsallowed func(ctx context.Context, sans []string) error
 }
 
-func (m *mockCA) Sign(cr *x509.CertificateRequest, opts provisioner.SignOptions, signOpts ...provisioner.SignOption) ([]*x509.Certificate, error) {
+func (m *mockCA) Sign(ctx context.Context, cr *x509.CertificateRequest, opts provisioner.SignOptions, signOpts ...provisioner.SignOption) ([]*x509.Certificate, error) {
 	return nil, nil
 }
 

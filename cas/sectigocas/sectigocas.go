@@ -5,8 +5,11 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"time"
 
+	"github.com/smallstep/certificates/acme"
+	"github.com/smallstep/certificates/authority/provisioner"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
 	pb "github.com/hm-edu/portal-apis"
@@ -19,6 +22,7 @@ import (
 
 type Options struct {
 	PKIBackend string `json:"pkiBackend"`
+	EABBackend string `json:"eabBackend"`
 }
 
 func init() {
@@ -46,14 +50,26 @@ func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 	if err != nil {
 		return nil, err
 	}
-	apiClient := pb.NewSSLServiceClient(conn)
+	sslServiceClient := pb.NewSSLServiceClient(conn)
+	conn, err = grpc.DialContext(
+		ctx,
+		config.EABBackend,
+		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	)
+	if err != nil {
+		return nil, err
+	}
+	eabClient := pb.NewEABServiceClient(conn)
 
-	return &SectigoCAS{client: apiClient, logger: logrus.StandardLogger()}, nil
+	return &SectigoCAS{sslServiceClient: sslServiceClient, eabClient: eabClient, logger: logrus.StandardLogger()}, nil
 }
 
 type SectigoCAS struct {
-	client pb.SSLServiceClient
-	logger *logrus.Logger
+	sslServiceClient pb.SSLServiceClient
+	eabClient        pb.EABServiceClient
+	logger           *logrus.Logger
 }
 
 func parseCertificates(cert []byte) ([]*x509.Certificate, error) {
@@ -72,8 +88,29 @@ func parseCertificates(cert []byte) ([]*x509.Certificate, error) {
 	}
 	return certs, nil
 }
+func accountFromContext(ctx context.Context) *acme.Account {
+	val, ok := ctx.Value("acc").(*acme.Account)
+	if !ok || val == nil {
+		return nil
+	}
+	return val
+}
 
-func (s *SectigoCAS) signCertificate(cr *x509.CertificateRequest) (*x509.Certificate, []*x509.Certificate, error) {
+// provisionerFromContext searches the context for a provisioner. Returns the
+// provisioner or nil.
+func provisionerFromContext(ctx context.Context) acme.Provisioner {
+	val := ctx.Value("provisioner")
+	if val == nil {
+		return nil
+	}
+	pval, ok := val.(acme.Provisioner)
+	if !ok || pval == nil {
+		return nil
+	}
+	return pval
+}
+
+func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRequest) (*x509.Certificate, []*x509.Certificate, error) {
 	sans := make([]string, 0, len(cr.DNSNames)+len(cr.EmailAddresses)+len(cr.IPAddresses)+len(cr.URIs))
 	sans = append(sans, cr.DNSNames...)
 	for _, ip := range cr.IPAddresses {
@@ -82,8 +119,29 @@ func (s *SectigoCAS) signCertificate(cr *x509.CertificateRequest) (*x509.Certifi
 	for _, u := range cr.URIs {
 		sans = append(sans, u.String())
 	}
+	prov := provisionerFromContext(ctx)
+	if prov == nil {
+		return nil, nil, errors.New("No provisioner passed!")
+	}
+	acmeProv, ok := prov.(*provisioner.ACME)
+	if !ok || acmeProv == nil {
+		return nil, nil, errors.New("No provisioner passed!")
+	}
+	issuer := ""
+	if acmeProv.RequireEAB {
+		acc := accountFromContext(ctx)
+		if acc == nil {
+			return nil, nil, errors.New("No account passed!")
+		}
+		user, err := s.eabClient.ResolveAccountId(context.Background(), &pb.ResolveAccountIdRequest{AccountId: acc.ID})
+		if err != nil {
+			return nil, nil, errors.WithMessage(err, "Error resolving user account!")
+		}
+		issuer = fmt.Sprintf("%v (ACME EAB: %v)", user.User, user.EabKey)
+	}
 
-	certificates, err := s.client.IssueCertificate(context.Background(), &pb.IssueSslRequest{
+	certificates, err := s.sslServiceClient.IssueCertificate(context.Background(), &pb.IssueSslRequest{
+		Issuer:                  issuer,
 		SubjectAlternativeNames: sans,
 		Csr:                     string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: cr.Raw})),
 	})
@@ -99,8 +157,8 @@ func (s *SectigoCAS) signCertificate(cr *x509.CertificateRequest) (*x509.Certifi
 	return certs[0], certs[1:], nil
 }
 
-func (s *SectigoCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
-	cert, chain, err := s.signCertificate(req.CSR)
+func (s *SectigoCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
+	cert, chain, err := s.signCertificate(ctx, req.CSR)
 	if err != nil {
 		return nil, err
 	}
@@ -110,8 +168,8 @@ func (s *SectigoCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*ap
 	}, nil
 }
 
-func (s *SectigoCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
-	cert, chain, err := s.signCertificate(req.CSR)
+func (s *SectigoCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
+	cert, chain, err := s.signCertificate(ctx, req.CSR)
 	if err != nil {
 		return nil, err
 	}
@@ -121,8 +179,8 @@ func (s *SectigoCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv
 	}, nil
 }
 
-func (s *SectigoCAS) RevokeCertificate(req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
-	_, err := s.client.RevokeCertificate(context.Background(), &pb.RevokeSslRequest{
+func (s *SectigoCAS) RevokeCertificate(ctx context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+	_, err := s.sslServiceClient.RevokeCertificate(context.Background(), &pb.RevokeSslRequest{
 		Identifier: &pb.RevokeSslRequest_Serial{Serial: req.SerialNumber},
 		Reason:     req.Reason,
 	})

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/smallstep/certificates/api/read"
@@ -44,7 +45,7 @@ func (h *caHandler) Rekey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	certChain, err := h.Authority.Rekey(r.TLS.PeerCertificates[0], body.CsrPEM.CertificateRequest.PublicKey)
+	certChain, err := h.Authority.Rekey(context.Background(), r.TLS.PeerCertificates[0], body.CsrPEM.CertificateRequest.PublicKey)
 	if err != nil {
 		render.Error(w, errs.Wrap(http.StatusInternalServerError, err, "cahandler.Rekey"))
 		return

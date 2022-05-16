@@ -74,7 +74,7 @@ func withDefaultASN1DN(def *config.ASN1DN) provisioner.CertificateModifierFunc {
 }
 
 // Sign creates a signed certificate from a certificate signing request.
-func (a *Authority) Sign(csr *x509.CertificateRequest, signOpts provisioner.SignOptions, extraOpts ...provisioner.SignOption) ([]*x509.Certificate, error) {
+func (a *Authority) Sign(ctx context.Context, csr *x509.CertificateRequest, signOpts provisioner.SignOptions, extraOpts ...provisioner.SignOption) ([]*x509.Certificate, error) {
 	var (
 		certOptions    []x509util.Option
 		certValidators []provisioner.CertificateValidator
@@ -221,7 +221,7 @@ func (a *Authority) Sign(csr *x509.CertificateRequest, signOpts provisioner.Sign
 
 	// Sign certificate
 	lifetime := leaf.NotAfter.Sub(leaf.NotBefore.Add(signOpts.Backdate))
-	resp, err := a.x509CAService.CreateCertificate(&casapi.CreateCertificateRequest{
+	resp, err := a.x509CAService.CreateCertificate(ctx, &casapi.CreateCertificateRequest{
 		Template: leaf,
 		CSR:      csr,
 		Lifetime: lifetime,
@@ -256,8 +256,8 @@ func (a *Authority) AreSANsAllowed(ctx context.Context, sans []string) error {
 
 // Renew creates a new Certificate identical to the old certificate, except
 // with a validity window that begins 'now'.
-func (a *Authority) Renew(oldCert *x509.Certificate) ([]*x509.Certificate, error) {
-	return a.Rekey(oldCert, nil)
+func (a *Authority) Renew(ctx context.Context, oldCert *x509.Certificate) ([]*x509.Certificate, error) {
+	return a.Rekey(ctx, oldCert, nil)
 }
 
 // Rekey is used for rekeying and renewing based on the public key.
@@ -269,7 +269,7 @@ func (a *Authority) Renew(oldCert *x509.Certificate) ([]*x509.Certificate, error
 // have changed), 'SubjectKeyId' (different in case of rekey), and
 // 'NotBefore/NotAfter' (the validity duration of the new certificate should be
 // equal to the old one, but starting 'now').
-func (a *Authority) Rekey(oldCert *x509.Certificate, pk crypto.PublicKey) ([]*x509.Certificate, error) {
+func (a *Authority) Rekey(ctx context.Context, oldCert *x509.Certificate, pk crypto.PublicKey) ([]*x509.Certificate, error) {
 	isRekey := (pk != nil)
 	opts := []interface{}{errs.WithKeyVal("serialNumber", oldCert.SerialNumber.String())}
 
@@ -340,7 +340,7 @@ func (a *Authority) Rekey(oldCert *x509.Certificate, pk crypto.PublicKey) ([]*x5
 		newCert.ExtraExtensions = append(newCert.ExtraExtensions, ext)
 	}
 
-	resp, err := a.x509CAService.RenewCertificate(&casapi.RenewCertificateRequest{
+	resp, err := a.x509CAService.RenewCertificate(ctx, &casapi.RenewCertificateRequest{
 		Template: newCert,
 		Lifetime: lifetime,
 		Backdate: backdate,
@@ -508,7 +508,7 @@ func (a *Authority) Revoke(ctx context.Context, revokeOpts *RevokeOptions) error
 
 		// CAS operation, note that SoftCAS (default) is a noop.
 		// The revoke happens when this is stored in the db.
-		_, err = a.x509CAService.RevokeCertificate(&casapi.RevokeCertificateRequest{
+		_, err = a.x509CAService.RevokeCertificate(ctx, &casapi.RevokeCertificateRequest{
 			Certificate:  revokedCert,
 			SerialNumber: rci.Serial,
 			Reason:       rci.Reason,
@@ -633,7 +633,7 @@ func (a *Authority) GetTLSCertificate(storage string, renew bool) (*tls.Certific
 	certTpl.NotBefore = now.Add(-1 * time.Minute)
 	certTpl.NotAfter = now.Add(24 * time.Hour)
 
-	resp, err := a.x509CAService.CreateCertificate(&casapi.CreateCertificateRequest{
+	resp, err := a.x509CAService.CreateCertificate(context.Background(), &casapi.CreateCertificateRequest{
 		Template: certTpl,
 		CSR:      cr,
 		Lifetime: 24 * time.Hour,

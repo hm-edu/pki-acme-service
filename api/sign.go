@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"net/http"
@@ -74,7 +75,7 @@ func (h *caHandler) Sign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	certChain, err := h.Authority.Sign(body.CsrPEM.CertificateRequest, opts, signOpts...)
+	certChain, err := h.Authority.Sign(context.Background(), body.CsrPEM.CertificateRequest, opts, signOpts...)
 	if err != nil {
 		render.Error(w, errs.ForbiddenErr(err, "error signing certificate"))
 		return

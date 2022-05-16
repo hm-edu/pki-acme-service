@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/x509"
 	"net/http"
 	"strings"
@@ -23,7 +24,7 @@ func (h *caHandler) Renew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	certChain, err := h.Authority.Renew(cert)
+	certChain, err := h.Authority.Renew(context.Background(), cert)
 	if err != nil {
 		render.Error(w, errs.Wrap(http.StatusInternalServerError, err, "cahandler.Renew"))
 		return

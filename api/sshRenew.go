@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/x509"
 	"net/http"
 	"time"
@@ -105,7 +106,7 @@ func (h *caHandler) renewIdentityCertificate(r *http.Request, notBefore, notAfte
 		cert.NotAfter = notAfter
 	}
 
-	certChain, err := h.Authority.Renew(cert)
+	certChain, err := h.Authority.Renew(context.Background(), cert)
 	if err != nil {
 		return nil, err
 	}

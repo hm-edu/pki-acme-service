@@ -112,7 +112,7 @@ func New(ctx context.Context, opts apiv1.Options) (*VaultCAS, error) {
 }
 
 // CreateCertificate signs a new certificate using Hashicorp Vault.
-func (v *VaultCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
+func (v *VaultCAS) CreateCertificate(_ context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
 	switch {
 	case req.CSR == nil:
 		return nil, errors.New("createCertificate `csr` cannot be nil")
@@ -167,12 +167,12 @@ func (v *VaultCAS) GetCertificateAuthority(req *apiv1.GetCertificateAuthorityReq
 
 // RenewCertificate will always return a non-implemented error as renewals
 // are not supported yet.
-func (v *VaultCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
+func (v *VaultCAS) RenewCertificate(_ context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
 	return nil, apiv1.ErrNotImplemented{Message: "vaultCAS does not support renewals"}
 }
 
 // RevokeCertificate revokes a certificate by serial number.
-func (v *VaultCAS) RevokeCertificate(req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+func (v *VaultCAS) RevokeCertificate(_ context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
 	if req.SerialNumber == "" && req.Certificate == nil {
 		return nil, errors.New("revokeCertificate `serialNumber` or `certificate` are required")
 	}
