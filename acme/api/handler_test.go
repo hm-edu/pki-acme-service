@@ -30,14 +30,8 @@ type MockClient struct {
 	Missing []string
 }
 
-func (c *MockClient) CheckPermission(ctx context.Context, in *pb.CheckPermissionRequest, opts ...grpc.CallOption) (*pb.CheckPermissionResponse, error) {
-	return &pb.CheckPermissionResponse{}, nil
-}
-func (c *MockClient) ListDomains(ctx context.Context, in *pb.ListDomainsRequest, opts ...grpc.CallOption) (*pb.ListDomainsResponse, error) {
-	return &pb.ListDomainsResponse{}, nil
-}
-func (c *MockClient) CheckRegistration(ctx context.Context, in *pb.CheckRegistrationRequest, opts ...grpc.CallOption) (*pb.CheckRegistrationResponse, error) {
-	return &pb.CheckRegistrationResponse{Missing: c.Missing}, nil
+func (c *MockClient) CheckEABPermissions(ctx context.Context, in *pb.CheckEABPermissionRequest, opts ...grpc.CallOption) (*pb.CheckEABPermissionResponse, error) {
+	return &pb.CheckEABPermissionResponse{Missing: c.Missing}, nil
 }
 
 func TestHandler_GetNonce(t *testing.T) {

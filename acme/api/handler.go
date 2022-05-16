@@ -51,7 +51,7 @@ type Handler struct {
 	linker                   Linker
 	validateChallengeOptions *acme.ValidateChallengeOptions
 	prerequisitesChecker     func(ctx context.Context) (bool, error)
-	client                   pb.DomainServiceClient
+	client                   pb.EABServiceClient
 }
 
 // HandlerOptions required to create a new ACME API request handler.
@@ -105,7 +105,7 @@ func NewHandler(ops HandlerOptions) api.RouterHandler {
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 	)
 
-	apiClient := pb.NewDomainServiceClient(conn)
+	apiClient := pb.NewEABServiceClient(conn)
 	return &Handler{
 		ca:       ops.CA,
 		db:       ops.DB,
@@ -336,14 +336,15 @@ func (h *Handler) GetCertificate(w http.ResponseWriter, r *http.Request) {
 	w.Write(certBytes)
 }
 
-func (h *Handler) checkPermission(ctx context.Context, identifiers []acme.Identifier) ([]string, error) {
+func (h *Handler) checkPermission(ctx context.Context, identifiers []acme.Identifier, eab *acme.ExternalAccountKey) ([]string, error) {
+	if eab == nil {
+		return nil, nil
+	}
 	var domains []string
 	for _, x := range identifiers {
-		if x.Type == acme.DNS {
-			domains = append(domains, x.Value)
-		}
+		domains = append(domains, x.Value)
 	}
-	result, err := h.client.CheckRegistration(ctx, &pb.CheckRegistrationRequest{Domains: domains})
+	result, err := h.client.CheckEABPermissions(ctx, &pb.CheckEABPermissionRequest{Domains: domains, EabKey: eab.ID})
 	if err != nil {
 		return nil, err
 	}

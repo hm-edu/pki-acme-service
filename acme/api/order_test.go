@@ -1097,7 +1097,9 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			p := newACMEProv(t)
+			p.RequireEAB = true
+			ctx := context.WithValue(context.Background(), provisionerContextKey, p)
 			ctx = context.WithValue(ctx, accContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
@@ -1106,7 +1108,14 @@ func TestHandler_NewOrder(t *testing.T) {
 				statusCode: 400,
 				ca:         &mockCA{},
 				missing:    []string{"zap.internal"},
-				err:        acme.NewError(acme.ErrorRejectedIdentifierType, "account does not exist"),
+				db: &acme.MockDB{MockGetExternalAccountKeyByAccountID: func(ctx context.Context, provisionerID, accountID string) (*acme.ExternalAccountKey, error) {
+					assert.Equals(t, prov.GetID(), provisionerID)
+					assert.Equals(t, "accID", accountID)
+					return &acme.ExternalAccountKey{
+						ID: "test",
+					}, nil
+				}},
+				err: acme.NewError(acme.ErrorRejectedIdentifierType, "account does not exist"),
 			}
 		},
 		"ok/multiple-authz": func(t *testing.T) test {

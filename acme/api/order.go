@@ -157,7 +157,7 @@ func (h *Handler) NewOrder(w http.ResponseWriter, r *http.Request) {
 		NotAfter:         nor.NotAfter,
 	}
 
-	if missing, err := h.checkPermission(ctx, o.Identifiers); len(missing) != 0 || err != nil {
+	if missing, err := h.checkPermission(ctx, o.Identifiers, eak); len(missing) != 0 || err != nil {
 		if err != nil {
 			render.Error(w, acme.NewError(acme.ErrorServerInternalType, "Internal server error"))
 			return
