@@ -5,9 +5,10 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 
@@ -232,7 +233,7 @@ func (db *DB) GetExternalAccountKeyByAccountID(ctx context.Context, provisionerI
 	externalAccountKeyMutex.RLock()
 	defer externalAccountKeyMutex.RUnlock()
 
-	logrus.Info(fmt.Sprintf("searching for eak keys bount to provisioner %v", provisionerID))
+	logrus.Debug(fmt.Sprintf("searching for eak keys bount to provisioner %v", provisionerID))
 	// cursor and limit are ignored in open source, at least for now.
 
 	var eakIDs []string
@@ -247,7 +248,7 @@ func (db *DB) GetExternalAccountKeyByAccountID(ctx context.Context, provisionerI
 			return nil, errors.Wrapf(err, "error unmarshaling ACME EAB Key IDs for provisioner %s", provisionerID)
 		}
 	}
-	logrus.Info(fmt.Sprintf("found %v eak keys (%v)", len(eakIDs), eakIDs))
+	logrus.Debug(fmt.Sprintf("found %v eak keys (%v)", len(eakIDs), eakIDs))
 	for _, eakID := range eakIDs {
 		if eakID == "" {
 			continue // shouldn't happen; just in case
@@ -258,7 +259,7 @@ func (db *DB) GetExternalAccountKeyByAccountID(ctx context.Context, provisionerI
 				return nil, errors.Wrapf(err, "error retrieving ACME EAB Key for provisioner %s and keyID %s", provisionerID, eakID)
 			}
 		}
-		logrus.Info(fmt.Sprintf("loaded %v", eak))
+		logrus.Debug(fmt.Sprintf("loaded %v", eak))
 		if eak.AccountID == accountID {
 			return &acme.ExternalAccountKey{
 				ID:            eak.ID,
@@ -270,7 +271,7 @@ func (db *DB) GetExternalAccountKeyByAccountID(ctx context.Context, provisionerI
 				BoundAt:       eak.BoundAt,
 			}, nil
 		}
-		logrus.Info(fmt.Sprintf("%s does not match %s", eak.AccountID, accountID))
+		logrus.Debug(fmt.Sprintf("%s does not match %s", eak.AccountID, accountID))
 	}
 
 	return nil, errors.Errorf("ACME EAB Key for account id %s not found", accountID)

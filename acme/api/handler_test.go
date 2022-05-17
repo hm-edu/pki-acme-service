@@ -34,7 +34,7 @@ func (c *MockClient) CheckEABPermissions(ctx context.Context, in *pb.CheckEABPer
 	return &pb.CheckEABPermissionResponse{Missing: c.Missing}, nil
 }
 
-func (c *MockClient) ResolveAccountId(ctx context.Context, in *pb.ResolveAccountIdRequest, opts ...grpc.CallOption) (*pb.ResolveAccountIdResponse, error) {
+func (c *MockClient) ResolveAccountId(ctx context.Context, in *pb.ResolveAccountIdRequest, opts ...grpc.CallOption) (*pb.ResolveAccountIdResponse, error) { //nolint
 	return nil, nil
 }
 
