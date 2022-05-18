@@ -182,7 +182,7 @@ func TestHandler_addDirLink(t *testing.T) {
 	}
 	var tests = map[string]func(t *testing.T) test{
 		"ok": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
 				linker:     NewLinker("dns", "acme"),
@@ -257,7 +257,7 @@ func TestHandler_verifyContentType(t *testing.T) {
 					linker: NewLinker("dns", "acme"),
 				},
 				url:         u,
-				ctx:         context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:         context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				contentType: "foo",
 				statusCode:  400,
 				err:         acme.NewError(acme.ErrorMalformedType, "expected content-type to be in [application/jose+json], but got foo"),
@@ -268,7 +268,7 @@ func TestHandler_verifyContentType(t *testing.T) {
 				h: Handler{
 					linker: NewLinker("dns", "acme"),
 				},
-				ctx:         context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:         context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				contentType: "foo",
 				statusCode:  400,
 				err:         acme.NewError(acme.ErrorMalformedType, "expected content-type to be in [application/jose+json application/pkix-cert application/pkcs7-mime], but got foo"),
@@ -279,7 +279,7 @@ func TestHandler_verifyContentType(t *testing.T) {
 				h: Handler{
 					linker: NewLinker("dns", "acme"),
 				},
-				ctx:         context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:         context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				contentType: "application/jose+json",
 				statusCode:  200,
 			}
@@ -289,7 +289,7 @@ func TestHandler_verifyContentType(t *testing.T) {
 				h: Handler{
 					linker: NewLinker("dns", "acme"),
 				},
-				ctx:         context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:         context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				contentType: "application/pkix-cert",
 				statusCode:  200,
 			}
@@ -299,7 +299,7 @@ func TestHandler_verifyContentType(t *testing.T) {
 				h: Handler{
 					linker: NewLinker("dns", "acme"),
 				},
-				ctx:         context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:         context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				contentType: "application/jose+json",
 				statusCode:  200,
 			}
@@ -309,7 +309,7 @@ func TestHandler_verifyContentType(t *testing.T) {
 				h: Handler{
 					linker: NewLinker("dns", "acme"),
 				},
-				ctx:         context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:         context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				contentType: "application/pkcs7-mime",
 				statusCode:  200,
 			}
@@ -743,13 +743,13 @@ func TestHandler_lookupJWK(t *testing.T) {
 	var tests = map[string]func(t *testing.T) test{
 		"fail/no-jws": func(t *testing.T) test {
 			return test{
-				ctx:        context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:        context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				statusCode: 500,
 				err:        acme.NewErrorISE("jws expected in request context"),
 			}
 		},
 		"fail/nil-jws": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, nil)
 			return test{
 				ctx:        ctx,
@@ -765,7 +765,7 @@ func TestHandler_lookupJWK(t *testing.T) {
 			assert.FatalError(t, err)
 			_jws, err := _signer.Sign([]byte("baz"))
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, _jws)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
@@ -789,7 +789,7 @@ func TestHandler_lookupJWK(t *testing.T) {
 			assert.FatalError(t, err)
 			_parsed, err := jose.ParseJWS(_raw)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, _parsed)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
@@ -800,7 +800,7 @@ func TestHandler_lookupJWK(t *testing.T) {
 			}
 		},
 		"fail/account-not-found": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, parsedJWS)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
@@ -817,7 +817,7 @@ func TestHandler_lookupJWK(t *testing.T) {
 			}
 		},
 		"fail/GetAccount-error": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, parsedJWS)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
@@ -835,7 +835,7 @@ func TestHandler_lookupJWK(t *testing.T) {
 		},
 		"fail/account-not-valid": func(t *testing.T) test {
 			acc := &acme.Account{Status: "deactivated"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, parsedJWS)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
@@ -853,7 +853,7 @@ func TestHandler_lookupJWK(t *testing.T) {
 		},
 		"ok": func(t *testing.T) test {
 			acc := &acme.Account{Status: "valid", Key: jwk}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, parsedJWS)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
@@ -945,13 +945,13 @@ func TestHandler_extractJWK(t *testing.T) {
 	var tests = map[string]func(t *testing.T) test{
 		"fail/no-jws": func(t *testing.T) test {
 			return test{
-				ctx:        context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:        context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				statusCode: 500,
 				err:        acme.NewErrorISE("jws expected in request context"),
 			}
 		},
 		"fail/nil-jws": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, nil)
 			return test{
 				ctx:        ctx,
@@ -969,7 +969,7 @@ func TestHandler_extractJWK(t *testing.T) {
 					},
 				},
 			}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, _jws)
 			return test{
 				ctx:        ctx,
@@ -987,7 +987,7 @@ func TestHandler_extractJWK(t *testing.T) {
 					},
 				},
 			}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, _jws)
 			return test{
 				ctx:        ctx,
@@ -996,7 +996,7 @@ func TestHandler_extractJWK(t *testing.T) {
 			}
 		},
 		"fail/GetAccountByKey-error": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, parsedJWS)
 			return test{
 				ctx: ctx,
@@ -1012,7 +1012,7 @@ func TestHandler_extractJWK(t *testing.T) {
 		},
 		"fail/account-not-valid": func(t *testing.T) test {
 			acc := &acme.Account{Status: "deactivated"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, parsedJWS)
 			return test{
 				ctx: ctx,
@@ -1028,7 +1028,7 @@ func TestHandler_extractJWK(t *testing.T) {
 		},
 		"ok": func(t *testing.T) test {
 			acc := &acme.Account{Status: "valid"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, parsedJWS)
 			return test{
 				ctx: ctx,
@@ -1051,7 +1051,7 @@ func TestHandler_extractJWK(t *testing.T) {
 			}
 		},
 		"ok/no-account": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, jwsContextKey, parsedJWS)
 			return test{
 				ctx: ctx,
@@ -1606,7 +1606,7 @@ func TestHandler_extractOrLookupJWK(t *testing.T) {
 			parsedJWS, err := jose.ParseJWS(raw)
 			assert.FatalError(t, err)
 			acc := &acme.Account{ID: "accID", Key: jwk, Status: "valid"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			ctx = context.WithValue(ctx, jwsContextKey, parsedJWS)
 			return test{
@@ -1673,7 +1673,7 @@ func TestHandler_checkPrerequisites(t *testing.T) {
 	}
 	var tests = map[string]func(t *testing.T) test{
 		"fail/error": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
 				linker:               NewLinker("dns", "acme"),
@@ -1687,7 +1687,7 @@ func TestHandler_checkPrerequisites(t *testing.T) {
 			}
 		},
 		"fail/prerequisites-nok": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
 				linker:               NewLinker("dns", "acme"),
@@ -1701,7 +1701,7 @@ func TestHandler_checkPrerequisites(t *testing.T) {
 			}
 		},
 		"ok": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
 				linker:               NewLinker("dns", "acme"),

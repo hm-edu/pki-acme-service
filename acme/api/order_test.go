@@ -280,14 +280,14 @@ func TestHandler_GetOrder(t *testing.T) {
 	var tests = map[string]func(t *testing.T) test{
 		"fail/no-account": func(t *testing.T) test {
 			return test{
-				ctx:        context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:        context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				statusCode: 400,
 				err:        acme.NewError(acme.ErrorAccountDoesNotExistType, "account does not exist"),
 			}
 		},
 		"fail/nil-account": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, nil)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, nil)
 			return test{
 				ctx:        ctx,
 				statusCode: 400,
@@ -296,7 +296,7 @@ func TestHandler_GetOrder(t *testing.T) {
 		},
 		"fail/no-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			return test{
 				ctx:        ctx,
 				statusCode: 500,
@@ -305,8 +305,8 @@ func TestHandler_GetOrder(t *testing.T) {
 		},
 		"fail/nil-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, nil)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, nil)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			return test{
 				ctx:        ctx,
 				statusCode: 500,
@@ -315,8 +315,8 @@ func TestHandler_GetOrder(t *testing.T) {
 		},
 		"fail/db.GetOrder-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -329,8 +329,8 @@ func TestHandler_GetOrder(t *testing.T) {
 		},
 		"fail/account-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -345,8 +345,8 @@ func TestHandler_GetOrder(t *testing.T) {
 		},
 		"fail/provisioner-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -361,8 +361,8 @@ func TestHandler_GetOrder(t *testing.T) {
 		},
 		"fail/order-update-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -385,8 +385,8 @@ func TestHandler_GetOrder(t *testing.T) {
 		},
 		"ok": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
@@ -683,14 +683,14 @@ func TestHandler_NewOrder(t *testing.T) {
 	var tests = map[string]func(t *testing.T) test{
 		"fail/no-account": func(t *testing.T) test {
 			return test{
-				ctx:        context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:        context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				statusCode: 400,
 				err:        acme.NewError(acme.ErrorAccountDoesNotExistType, "account does not exist"),
 			}
 		},
 		"fail/nil-account": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, nil)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, nil)
 			return test{
 				ctx:        ctx,
 				statusCode: 400,
@@ -699,7 +699,7 @@ func TestHandler_NewOrder(t *testing.T) {
 		},
 		"fail/no-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			return test{
 				ctx:        ctx,
 				statusCode: 500,
@@ -708,8 +708,8 @@ func TestHandler_NewOrder(t *testing.T) {
 		},
 		"fail/nil-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, nil)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, nil)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			return test{
 				ctx:        ctx,
 				statusCode: 500,
@@ -718,8 +718,8 @@ func TestHandler_NewOrder(t *testing.T) {
 		},
 		"fail/no-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
-			ctx = context.WithValue(ctx, provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
+			ctx = context.WithValue(ctx, ProvisionerContextKey, prov)
 			return test{
 				ctx:        ctx,
 				statusCode: 500,
@@ -728,8 +728,8 @@ func TestHandler_NewOrder(t *testing.T) {
 		},
 		"fail/nil-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, nil)
 			return test{
 				ctx:        ctx,
@@ -739,8 +739,8 @@ func TestHandler_NewOrder(t *testing.T) {
 		},
 		"fail/unmarshal-payload-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{})
 			return test{
 				ctx:        ctx,
@@ -753,8 +753,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			fr := &NewOrderRequest{}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -771,8 +771,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, &acme.MockProvisioner{})
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, &acme.MockProvisioner{})
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -799,8 +799,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, acmeProv)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, acmeProv)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -827,8 +827,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, acmeProv)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, acmeProv)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -863,8 +863,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, acmeProv)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, acmeProv)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -906,8 +906,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, provWithPolicy)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, provWithPolicy)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -949,8 +949,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, provWithPolicy)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, provWithPolicy)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -987,8 +987,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -1021,8 +1021,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2, ch3 **acme.Challenge
@@ -1099,8 +1099,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			assert.FatalError(t, err)
 			p := newACMEProv(t)
 			p.RequireEAB = true
-			ctx := context.WithValue(context.Background(), provisionerContextKey, p)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, p)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			return test{
@@ -1128,8 +1128,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			var (
@@ -1249,8 +1249,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			var (
@@ -1347,8 +1347,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			var (
@@ -1444,8 +1444,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			var (
@@ -1542,8 +1542,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			var (
@@ -1643,8 +1643,8 @@ func TestHandler_NewOrder(t *testing.T) {
 			}
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, provWithPolicy)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, provWithPolicy)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			var (
@@ -1829,14 +1829,14 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 	var tests = map[string]func(t *testing.T) test{
 		"fail/no-account": func(t *testing.T) test {
 			return test{
-				ctx:        context.WithValue(context.Background(), provisionerContextKey, prov),
+				ctx:        context.WithValue(context.Background(), ProvisionerContextKey, prov),
 				statusCode: 400,
 				err:        acme.NewError(acme.ErrorAccountDoesNotExistType, "account does not exist"),
 			}
 		},
 		"fail/nil-account": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, nil)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, nil)
 			return test{
 				ctx:        ctx,
 				statusCode: 400,
@@ -1845,7 +1845,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/no-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			return test{
 				ctx:        ctx,
 				statusCode: 500,
@@ -1854,8 +1854,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/nil-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, nil)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, nil)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			return test{
 				ctx:        ctx,
 				statusCode: 500,
@@ -1864,8 +1864,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/no-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
-			ctx = context.WithValue(ctx, provisionerContextKey, prov)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
+			ctx = context.WithValue(ctx, ProvisionerContextKey, prov)
 			return test{
 				ctx:        ctx,
 				statusCode: 500,
@@ -1874,8 +1874,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/nil-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, nil)
 			return test{
 				ctx:        ctx,
@@ -1885,8 +1885,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/unmarshal-payload-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{})
 			return test{
 				ctx:        ctx,
@@ -1899,8 +1899,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 			fr := &FinalizeRequest{}
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -1911,8 +1911,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		"fail/db.GetOrder-error": func(t *testing.T) test {
 
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -1926,8 +1926,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/account-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -1943,8 +1943,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/provisioner-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -1960,8 +1960,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/order-finalize-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -1985,8 +1985,8 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"ok": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), provisionerContextKey, prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx := context.WithValue(context.Background(), ProvisionerContextKey, prov)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, baseURLContextKey, baseURL)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)

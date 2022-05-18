@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/smallstep/certificates/acme"
+	"github.com/smallstep/certificates/acme/api"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
@@ -89,7 +90,7 @@ func parseCertificates(cert []byte) ([]*x509.Certificate, error) {
 	return certs, nil
 }
 func accountFromContext(ctx context.Context) *acme.Account {
-	val, ok := ctx.Value("acc").(*acme.Account)
+	val, ok := ctx.Value(api.AccContextKey).(*acme.Account)
 	if !ok || val == nil {
 		return nil
 	}
@@ -99,7 +100,7 @@ func accountFromContext(ctx context.Context) *acme.Account {
 // provisionerFromContext searches the context for a provisioner. Returns the
 // provisioner or nil.
 func provisionerFromContext(ctx context.Context) acme.Provisioner {
-	val := ctx.Value("provisioner")
+	val := ctx.Value(api.ProvisionerContextKey)
 	if val == nil {
 		return nil
 	}
@@ -119,13 +120,18 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 	for _, u := range cr.URIs {
 		sans = append(sans, u.String())
 	}
+
+	fmt.Printf("%+v\n", ctx.Value(api.AccContextKey))
+	fmt.Printf("%+v\n", ctx.Value(api.ProvisionerContextKey))
+
 	prov := provisionerFromContext(ctx)
 	if prov == nil {
 		return nil, nil, errors.New("No provisioner passed!")
 	}
+
 	acmeProv, ok := prov.(*provisioner.ACME)
 	if !ok || acmeProv == nil {
-		return nil, nil, errors.New("No provisioner passed!")
+		return nil, nil, errors.New("No ACME provisioner passed!")
 	}
 	issuer := ""
 	if acmeProv.RequireEAB {

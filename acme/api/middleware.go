@@ -277,7 +277,7 @@ func (h *Handler) extractJWK(next nextHTTP) nextHTTP {
 				render.Error(w, acme.NewError(acme.ErrorUnauthorizedType, "account is not active"))
 				return
 			}
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 		}
 		next(w, r.WithContext(ctx))
 	}
@@ -304,7 +304,7 @@ func (h *Handler) lookupProvisioner(next nextHTTP) nextHTTP {
 			render.Error(w, acme.NewError(acme.ErrorAccountDoesNotExistType, "provisioner must be of type ACME"))
 			return
 		}
-		ctx = context.WithValue(ctx, provisionerContextKey, acme.Provisioner(acmeProv))
+		ctx = context.WithValue(ctx, ProvisionerContextKey, acme.Provisioner(acmeProv))
 		next(w, r.WithContext(ctx))
 	}
 }
@@ -362,7 +362,7 @@ func (h *Handler) lookupJWK(next nextHTTP) nextHTTP {
 				render.Error(w, acme.NewError(acme.ErrorUnauthorizedType, "account is not active"))
 				return
 			}
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, jwkContextKey, acc.Key)
 			next(w, r.WithContext(ctx))
 			return
@@ -460,8 +460,8 @@ func (h *Handler) isPostAsGet(next nextHTTP) nextHTTP {
 type ContextKey string
 
 const (
-	// accContextKey account key
-	accContextKey = ContextKey("acc")
+	// AccContextKey account key
+	AccContextKey = ContextKey("acc")
 	// baseURLContextKey baseURL key
 	baseURLContextKey = ContextKey("baseURL")
 	// jwsContextKey jws key
@@ -470,14 +470,14 @@ const (
 	jwkContextKey = ContextKey("jwk")
 	// payloadContextKey payload key
 	payloadContextKey = ContextKey("payload")
-	// provisionerContextKey provisioner key
-	provisionerContextKey = ContextKey("provisioner")
+	// ProvisionerContextKey provisioner key
+	ProvisionerContextKey = ContextKey("provisioner")
 )
 
 // accountFromContext searches the context for an ACME account. Returns the
 // account or an error.
 func accountFromContext(ctx context.Context) (*acme.Account, error) {
-	val, ok := ctx.Value(accContextKey).(*acme.Account)
+	val, ok := ctx.Value(AccContextKey).(*acme.Account)
 	if !ok || val == nil {
 		return nil, acme.NewError(acme.ErrorAccountDoesNotExistType, "account not in context")
 	}
@@ -514,7 +514,7 @@ func jwsFromContext(ctx context.Context) (*jose.JSONWebSignature, error) {
 // provisionerFromContext searches the context for a provisioner. Returns the
 // provisioner or an error.
 func provisionerFromContext(ctx context.Context) (acme.Provisioner, error) {
-	val := ctx.Value(provisionerContextKey)
+	val := ctx.Value(ProvisionerContextKey)
 	if val == nil {
 		return nil, acme.NewErrorISE("provisioner expected in request context")
 	}
