@@ -23,7 +23,11 @@ require (
 	github.com/googleapis/gax-go/v2 v2.1.1
 	github.com/hashicorp/vault/api v1.5.0
 	github.com/hashicorp/vault/api/auth/approle v0.1.1
+	github.com/hashicorp/vault/api/auth/kubernetes v0.1.0
 	github.com/hm-edu/portal-apis v0.0.0-20220517041651-934dc36f0473
+	github.com/jhump/protoreflect v1.9.0 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/micromdm/scep/v2 v2.1.0
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/newrelic/go-agent v2.15.0+incompatible
@@ -123,8 +127,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
-	github.com/mattn/go-colorable v0.1.6 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect

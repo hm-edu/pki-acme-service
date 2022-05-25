@@ -97,20 +97,6 @@ func accountFromContext(ctx context.Context) *acme.Account {
 	return val
 }
 
-// provisionerFromContext searches the context for a provisioner. Returns the
-// provisioner or nil.
-func provisionerFromContext(ctx context.Context) acme.Provisioner {
-	val := ctx.Value(api.ProvisionerContextKey)
-	if val == nil {
-		return nil
-	}
-	pval, ok := val.(acme.Provisioner)
-	if !ok || pval == nil {
-		return nil
-	}
-	return pval
-}
-
 func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRequest) (*x509.Certificate, []*x509.Certificate, error) {
 	sans := make([]string, 0, len(cr.DNSNames)+len(cr.EmailAddresses)+len(cr.IPAddresses)+len(cr.URIs))
 	sans = append(sans, cr.DNSNames...)
@@ -120,12 +106,8 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 	for _, u := range cr.URIs {
 		sans = append(sans, u.String())
 	}
-
-	fmt.Printf("%+v\n", ctx.Value(api.AccContextKey))
-	fmt.Printf("%+v\n", ctx.Value(api.ProvisionerContextKey))
-
-	prov := provisionerFromContext(ctx)
-	if prov == nil {
+	prov, ok := acme.ProvisionerFromContext(ctx)
+	if !ok || prov == nil {
 		return nil, nil, errors.New("No provisioner passed!")
 	}
 

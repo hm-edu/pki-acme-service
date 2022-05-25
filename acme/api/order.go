@@ -72,8 +72,12 @@ var defaultOrderExpiry = time.Hour * 24
 var defaultOrderBackdate = time.Minute
 
 // NewOrder ACME api for creating a new order.
-func (h *Handler) NewOrder(w http.ResponseWriter, r *http.Request) {
+func NewOrder(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	ca := mustAuthority(ctx)
+	db := acme.MustDatabaseFromContext(ctx)
+	linker := acme.MustLinkerFromContext(ctx)
+
 	acc, err := accountFromContext(ctx)
 	if err != nil {
 		render.Error(w, err)
@@ -113,7 +117,7 @@ func (h *Handler) NewOrder(w http.ResponseWriter, r *http.Request) {
 
 	var eak *acme.ExternalAccountKey
 	if acmeProv.RequireEAB {
-		if eak, err = h.db.GetExternalAccountKeyByAccountID(ctx, prov.GetID(), acc.ID); err != nil {
+		if eak, err = db.GetExternalAccountKeyByAccountID(ctx, prov.GetID(), acc.ID); err != nil {
 			render.Error(w, acme.WrapErrorISE(err, "error retrieving external account binding key"))
 			return
 		}
@@ -138,7 +142,7 @@ func (h *Handler) NewOrder(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// evaluate the authority level policy
-		if err = h.ca.AreSANsAllowed(ctx, []string{identifier.Value}); err != nil {
+		if err = ca.AreSANsAllowed(ctx, []string{identifier.Value}); err != nil {
 			render.Error(w, acme.WrapError(acme.ErrorRejectedIdentifierType, err, "not authorized"))
 			return
 		}
@@ -157,7 +161,7 @@ func (h *Handler) NewOrder(w http.ResponseWriter, r *http.Request) {
 		NotAfter:         nor.NotAfter,
 	}
 
-	if missing, err := h.checkPermission(ctx, o.Identifiers, eak); len(missing) != 0 || err != nil {
+	if missing, err := checkPermission(ctx, o.Identifiers, eak); len(missing) != 0 || err != nil {
 		if err != nil {
 			render.Error(w, acme.NewError(acme.ErrorServerInternalType, "Internal server error"))
 			return
@@ -173,7 +177,7 @@ func (h *Handler) NewOrder(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt:  o.ExpiresAt,
 			Status:     acme.StatusPending,
 		}
-		if err := h.newAuthorization(ctx, az); err != nil {
+		if err := newAuthorization(ctx, az); err != nil {
 			render.Error(w, err)
 			return
 		}
@@ -192,14 +196,14 @@ func (h *Handler) NewOrder(w http.ResponseWriter, r *http.Request) {
 		o.NotBefore = o.NotBefore.Add(-defaultOrderBackdate)
 	}
 
-	if err := h.db.CreateOrder(ctx, o); err != nil {
+	if err := db.CreateOrder(ctx, o); err != nil {
 		render.Error(w, acme.WrapErrorISE(err, "error creating order"))
 		return
 	}
 
-	h.linker.LinkOrder(ctx, o)
+	linker.LinkOrder(ctx, o)
 
-	w.Header().Set("Location", h.linker.GetLink(ctx, OrderLinkType, o.ID))
+	w.Header().Set("Location", linker.GetLink(ctx, acme.OrderLinkType, o.ID))
 	render.JSONStatus(w, o, http.StatusCreated)
 }
 
@@ -217,7 +221,7 @@ func newACMEPolicyEngine(eak *acme.ExternalAccountKey) (policy.X509Policy, error
 	return policy.NewX509PolicyEngine(eak.Policy)
 }
 
-func (h *Handler) newAuthorization(ctx context.Context, az *acme.Authorization) error {
+func newAuthorization(ctx context.Context, az *acme.Authorization) error {
 	if strings.HasPrefix(az.Identifier.Value, "*.") {
 		az.Wildcard = true
 		az.Identifier = acme.Identifier{
@@ -233,6 +237,8 @@ func (h *Handler) newAuthorization(ctx context.Context, az *acme.Authorization) 
 	if err != nil {
 		return acme.WrapErrorISE(err, "error generating random alphanumeric ID")
 	}
+
+	db := acme.MustDatabaseFromContext(ctx)
 	az.Challenges = make([]*acme.Challenge, len(chTypes))
 	for i, typ := range chTypes {
 		ch := &acme.Challenge{
@@ -242,20 +248,23 @@ func (h *Handler) newAuthorization(ctx context.Context, az *acme.Authorization) 
 			Token:     az.Token,
 			Status:    acme.StatusPending,
 		}
-		if err := h.db.CreateChallenge(ctx, ch); err != nil {
+		if err := db.CreateChallenge(ctx, ch); err != nil {
 			return acme.WrapErrorISE(err, "error creating challenge")
 		}
 		az.Challenges[i] = ch
 	}
-	if err = h.db.CreateAuthorization(ctx, az); err != nil {
+	if err = db.CreateAuthorization(ctx, az); err != nil {
 		return acme.WrapErrorISE(err, "error creating authorization")
 	}
 	return nil
 }
 
 // GetOrder ACME api for retrieving an order.
-func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request) {
+func GetOrder(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	db := acme.MustDatabaseFromContext(ctx)
+	linker := acme.MustLinkerFromContext(ctx)
+
 	acc, err := accountFromContext(ctx)
 	if err != nil {
 		render.Error(w, err)
@@ -266,7 +275,8 @@ func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
-	o, err := h.db.GetOrder(ctx, chi.URLParam(r, "ordID"))
+
+	o, err := db.GetOrder(ctx, chi.URLParam(r, "ordID"))
 	if err != nil {
 		render.Error(w, acme.WrapErrorISE(err, "error retrieving order"))
 		return
@@ -281,14 +291,14 @@ func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request) {
 			"provisioner '%s' does not own order '%s'", prov.GetID(), o.ID))
 		return
 	}
-	if err = o.UpdateStatus(ctx, h.db); err != nil {
+	if err = o.UpdateStatus(ctx, db); err != nil {
 		render.Error(w, acme.WrapErrorISE(err, "error updating order status"))
 		return
 	}
 
-	h.linker.LinkOrder(ctx, o)
+	linker.LinkOrder(ctx, o)
 
-	w.Header().Set("Location", h.linker.GetLink(ctx, OrderLinkType, o.ID))
+	w.Header().Set("Location", linker.GetLink(ctx, acme.OrderLinkType, o.ID))
 	if o.Status == acme.StatusProcessing {
 		// Due to the bad behavior of the k8s cert-manager we must catch this client using the User-Agent and handle it in a special way.
 		// The cert-manager does not repect the retry after flags and will retry too fast.
@@ -301,9 +311,12 @@ func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, o)
 }
 
-// FinalizeOrder attemptst to finalize an order and create a certificate.
-func (h *Handler) FinalizeOrder(w http.ResponseWriter, r *http.Request) {
+// FinalizeOrder attempts to finalize an order and create a certificate.
+func FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	db := acme.MustDatabaseFromContext(ctx)
+	linker := acme.MustLinkerFromContext(ctx)
+
 	acc, err := accountFromContext(ctx)
 	if err != nil {
 		render.Error(w, err)
@@ -330,7 +343,7 @@ func (h *Handler) FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	o, err := h.db.GetOrder(ctx, chi.URLParam(r, "ordID"))
+	o, err := db.GetOrder(ctx, chi.URLParam(r, "ordID"))
 	if err != nil {
 		render.Error(w, acme.WrapErrorISE(err, "error retrieving order"))
 		return
@@ -346,14 +359,14 @@ func (h *Handler) FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = o.Finalize(ctx, h.db, fr.csr, h.ca, prov); err != nil {
+	ca := mustAuthority(ctx)
+	if _, err = o.Finalize(ctx, db, fr.csr, ca, prov); err != nil {
 		render.Error(w, acme.WrapErrorISE(err, "error finalizing order"))
 		return
 	}
 
-	h.linker.LinkOrder(ctx, o)
-
-	w.Header().Set("Location", h.linker.GetLink(ctx, OrderLinkType, o.ID))
+	linker.LinkOrder(ctx, o)
+	w.Header().Set("Location", linker.GetLink(ctx, acme.OrderLinkType, o.ID))
 	w.Header().Set("Retry-After", "30")
 	render.JSON(w, o)
 }
