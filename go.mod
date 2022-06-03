@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/vault/api v1.5.0
 	github.com/hashicorp/vault/api/auth/approle v0.1.1
 	github.com/hashicorp/vault/api/auth/kubernetes v0.1.0
-	github.com/hm-edu/portal-apis v0.0.0-20220517041651-934dc36f0473
+	github.com/hm-edu/portal-apis v0.0.0-20220603062428-bf1306b32398
 	github.com/jhump/protoreflect v1.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
@@ -48,17 +48,17 @@ require (
 	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a // indirect
 	google.golang.org/api v0.70.0
 	google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3
-	google.golang.org/grpc v1.46.2
+	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
 
 require (
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.31.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.32.0
 	go.opentelemetry.io/contrib/propagators/b3 v1.7.0
 	go.opentelemetry.io/otel v1.7.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.6.3
-	go.opentelemetry.io/otel/sdk v1.6.3
+	go.opentelemetry.io/otel/exporters/jaeger v1.7.0
+	go.opentelemetry.io/otel/sdk v1.7.0
 )
 
 require (

@@ -125,12 +125,13 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 		if err != nil {
 			return nil, nil, errors.WithMessage(err, "Error resolving user account!")
 		}
-		issuer = fmt.Sprintf("%v (ACME EAB: %v)", user.User, user.EabKey)
+		issuer = fmt.Sprintf("%v (EAB: %v)", user.User, user.EabKey)
 	}
 
 	certificates, err := s.sslServiceClient.IssueCertificate(context.Background(), &pb.IssueSslRequest{
 		Issuer:                  issuer,
 		SubjectAlternativeNames: sans,
+		Source:                  "ACME",
 		Csr:                     string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: cr.Raw})),
 	})
 	if err != nil {
