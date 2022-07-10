@@ -383,7 +383,7 @@ func TestSoftCAS_CreateCertificate_pss(t *testing.T) {
 		CertificateChain: []*x509.Certificate{iss},
 		Signer:           signer,
 	}
-	cert, err := c.CreateCertificate(&apiv1.CreateCertificateRequest{
+	cert, err := c.CreateCertificate(context.Background(), &apiv1.CreateCertificateRequest{
 		Template: &x509.Certificate{
 			Subject:      pkix.Name{CommonName: "test.smallstep.com"},
 			DNSNames:     []string{"test.smallstep.com"},
