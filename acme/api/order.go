@@ -312,7 +312,7 @@ func GetOrder(w http.ResponseWriter, r *http.Request) {
 			render.Error(w, acme.NewErrorISE("Request is processing"))
 			return
 		}
-		w.Header().Set("Retry-After", "15")
+		w.Header().Set("Retry-After", "10")
 	}
 	render.JSON(w, o)
 }
@@ -373,7 +373,7 @@ func FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 
 	linker.LinkOrder(ctx, o)
 	w.Header().Set("Location", linker.GetLink(ctx, acme.OrderLinkType, o.ID))
-	w.Header().Set("Retry-After", "30")
+	w.Header().Set("Retry-After", "20")
 	render.JSON(w, o)
 }
 
