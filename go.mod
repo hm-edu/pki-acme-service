@@ -14,7 +14,8 @@ require (
 	github.com/ThalesIgnite/crypto11 v1.2.4
 	github.com/aws/aws-sdk-go v1.39.0
 	github.com/go-chi/chi v4.0.2+incompatible
-	github.com/go-piv/piv-go v1.7.0
+	github.com/go-kit/kit v0.10.0 // indirect
+	github.com/go-piv/piv-go v1.10.0
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0
@@ -29,8 +30,8 @@ require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/micromdm/scep/v2 v2.1.0
-	github.com/miekg/pkcs11 v1.0.3 // indirect
-	github.com/newrelic/go-agent v2.15.0+incompatible
+	github.com/miekg/pkcs11 v1.1.1 // indirect
+	github.com/newrelic/go-agent/v3 v3.18.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.2.1
 	github.com/sirupsen/logrus v1.8.1
@@ -42,7 +43,7 @@ require (
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.0
 	go.step.sm/crypto v0.16.2
-	go.step.sm/linkedca v0.16.1
+	go.step.sm/linkedca v0.17.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 	golang.org/x/net v0.0.0-20220516155154-20f960328961
 	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a // indirect
