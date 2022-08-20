@@ -9,13 +9,13 @@ import (
 
 	"github.com/pkg/errors"
 
+	kms "go.step.sm/crypto/kms/apiv1"
 	"go.step.sm/linkedca"
 
 	"github.com/smallstep/certificates/authority/policy"
 	"github.com/smallstep/certificates/authority/provisioner"
 	cas "github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/db"
-	kms "github.com/smallstep/certificates/kms/apiv1"
 	"github.com/smallstep/certificates/templates"
 )
 
@@ -73,6 +73,7 @@ type Config struct {
 	Password         string               `json:"password,omitempty"`
 	Templates        *templates.Templates `json:"templates,omitempty"`
 	CommonName       string               `json:"commonName,omitempty"`
+	SkipValidation   bool                 `json:"-"`
 	Storage          string               `json:"storage,omitempty"`
 	ManagementHost   string               `json:"managementHost"`
 }
@@ -105,6 +106,7 @@ type AuthConfig struct {
 	DisableIssuedAtCheck bool                  `json:"disableIssuedAtCheck,omitempty"`
 	Backdate             *provisioner.Duration `json:"backdate,omitempty"`
 	EnableAdmin          bool                  `json:"enableAdmin,omitempty"`
+	DisableGetSSHHosts   bool                  `json:"disableGetSSHHosts,omitempty"`
 }
 
 // init initializes the required fields in the AuthConfig if they are not
@@ -203,6 +205,8 @@ func (c *Config) Save(filename string) error {
 // Validate validates the configuration.
 func (c *Config) Validate() error {
 	switch {
+	case c.SkipValidation:
+		return nil
 	case c.Address == "":
 		return errors.New("address cannot be empty")
 	case len(c.DNSNames) == 0:
