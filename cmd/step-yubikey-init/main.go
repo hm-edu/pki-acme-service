@@ -6,7 +6,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/sha1" // nolint:gosec // used to create the Subject Key Identifier by RFC 5280
+	"crypto/sha1" //nolint:gosec // used to create the Subject Key Identifier by RFC 5280
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
@@ -89,6 +89,9 @@ func main() {
 
 	// Initialize windows terminal
 	ui.Init()
+
+	ui.Println("⚠️  This command is deprecated and will be removed in future releases.")
+	ui.Println("⚠️  Please use https://github.com/smallstep/step-kms-plugin instead.")
 
 	pin, err := ui.PromptPassword("What is the YubiKey PIN?")
 	if err != nil {
@@ -346,7 +349,7 @@ func mustSubjectKeyID(key crypto.PublicKey) []byte {
 	if err != nil {
 		panic(err)
 	}
-	// nolint:gosec // used to create the Subject Key Identifier by RFC 5280
+	//nolint:gosec // used to create the Subject Key Identifier by RFC 5280
 	hash := sha1.Sum(b)
 	return hash[:]
 }

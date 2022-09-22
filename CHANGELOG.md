@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- Added support for ACME device-attest-01 challenge.
+
+## [0.22.1] - 2022-08-31
+### Fixed
+- Fixed signature algorithm on EC (root) + RSA (intermediate) PKIs.
+
+## [0.22.0] - 2022-08-26
+### Added
 - Added automatic configuration of Linked RAs.
 - Send provisioner configuration on Linked RAs.
 ### Changed

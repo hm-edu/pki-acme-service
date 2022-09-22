@@ -57,7 +57,6 @@ func (db *DB) getDBExternalAccountKey(ctx context.Context, id string) (*dbExtern
 
 // CreateExternalAccountKey creates a new External Account Binding key with a name
 func (db *DB) CreateExternalAccountKey(ctx context.Context, provisionerID, reference string) (*acme.ExternalAccountKey, error) {
-
 	externalAccountKeyMutex.Lock()
 	defer externalAccountKeyMutex.Unlock()
 
@@ -212,6 +211,7 @@ func (db *DB) GetExternalAccountKeyByReference(ctx context.Context, provisionerI
 	defer externalAccountKeyMutex.RUnlock()
 
 	if reference == "" {
+		//nolint:nilnil // legacy
 		return nil, nil
 	}
 
@@ -417,7 +417,6 @@ func sliceIndex(slice []string, item string) int {
 // removeElement deletes the item if it exists in the
 // slice. It returns a new slice, keeping the old one intact.
 func removeElement(slice []string, item string) []string {
-
 	newSlice := make([]string, 0)
 	index := sliceIndex(slice, item)
 	if index < 0 {
