@@ -29,7 +29,7 @@ import (
 	casapi "github.com/smallstep/certificates/cas/apiv1"
 	"github.com/smallstep/certificates/db"
 	"github.com/smallstep/certificates/errs"
-	"github.com/smallstep/certificates/policy"
+	"github.com/smallstep/certificates/webhook"
 )
 
 // GetTLSOptions returns the tls options configured.
@@ -95,7 +95,8 @@ func (a *Authority) Sign(ctx context.Context, csr *x509.CertificateRequest, sign
 
 	var prov provisioner.Interface
 	var pInfo *casapi.ProvisionerInfo
-	var attData provisioner.AttestationData
+	var attData *provisioner.AttestationData
+	var webhookCtl webhookController
 	for _, op := range extraOpts {
 		switch k := op.(type) {
 		// Capture current provisioner
@@ -133,12 +134,23 @@ func (a *Authority) Sign(ctx context.Context, csr *x509.CertificateRequest, sign
 
 		// Extra information from ACME attestations.
 		case provisioner.AttestationData:
-			attData = k
-			// TODO(mariano,areed): remove me once attData is used.
-			_ = attData
+			attData = &k
+
+		// Capture the provisioner's webhook controller
+		case webhookController:
+			webhookCtl = k
+
 		default:
 			return nil, errs.InternalServer("authority.Sign; invalid extra option type %T", append([]interface{}{k}, opts...)...)
 		}
+	}
+
+	if err := callEnrichingWebhooksX509(webhookCtl, attData, csr); err != nil {
+		return nil, errs.ApplyOptions(
+			errs.ForbiddenErr(err, err.Error()),
+			errs.WithKeyVal("csr", csr),
+			errs.WithKeyVal("signOptions", signOpts),
+		)
 	}
 
 	cert, err := x509util.NewCertificate(csr, certOptions...)
@@ -214,20 +226,22 @@ func (a *Authority) Sign(ctx context.Context, csr *x509.CertificateRequest, sign
 
 	// Check if authority is allowed to sign the certificate
 	if err := a.isAllowedToSignX509Certificate(leaf); err != nil {
-		var pe *policy.NamePolicyError
-		if errors.As(err, &pe) && pe.Reason == policy.NotAllowed {
-			return nil, errs.ApplyOptions(&errs.Error{
-				// NOTE: custom forbidden error, so that denied name is sent to client
-				// as well as shown in the logs.
-				Status: http.StatusForbidden,
-				Err:    fmt.Errorf("authority not allowed to sign: %w", err),
-				Msg:    fmt.Sprintf("The request was forbidden by the certificate authority: %s", err.Error()),
-			}, opts...)
+		var ee *errs.Error
+		if errors.As(err, &ee) {
+			return nil, errs.ApplyOptions(ee, opts...)
 		}
 		return nil, errs.InternalServerErr(err,
 			errs.WithKeyVal("csr", csr),
 			errs.WithKeyVal("signOptions", signOpts),
 			errs.WithMessage("error creating certificate"),
+		)
+	}
+
+	// Send certificate to webhooks for authorization
+	if err := callAuthorizingWebhooksX509(webhookCtl, cert, leaf, attData); err != nil {
+		return nil, errs.ApplyOptions(
+			errs.ForbiddenErr(err, "error creating certificate"),
+			opts...,
 		)
 	}
 
@@ -246,6 +260,11 @@ func (a *Authority) Sign(ctx context.Context, csr *x509.CertificateRequest, sign
 	}
 
 	fullchain := append([]*x509.Certificate{resp.Certificate}, resp.CertificateChain...)
+
+	// Wrap provisioner with extra information.
+	prov = wrapProvisioner(prov, attData)
+
+	// Store certificate in the db.
 	if err = a.storeCertificate(prov, fullchain); err != nil {
 		if !errors.Is(err, db.ErrNotImplemented) {
 			return nil, errs.Wrap(http.StatusInternalServerError, err,
@@ -259,6 +278,9 @@ func (a *Authority) Sign(ctx context.Context, csr *x509.CertificateRequest, sign
 // isAllowedToSignX509Certificate checks if the Authority is allowed
 // to sign the X.509 certificate.
 func (a *Authority) isAllowedToSignX509Certificate(cert *x509.Certificate) error {
+	if err := a.constraintsEngine.ValidateCertificate(cert); err != nil {
+		return err
+	}
 	return a.policyEngine.IsX509CertificateAllowed(cert)
 }
 
@@ -352,6 +374,22 @@ func (a *Authority) Rekey(ctx context.Context, oldCert *x509.Certificate, pk cry
 			continue
 		}
 		newCert.ExtraExtensions = append(newCert.ExtraExtensions, ext)
+	}
+
+	// Check if the certificate is allowed to be renewed, name constraints might
+	// change over time.
+	//
+	// TODO(hslatman,maraino): consider adding policies too and consider if
+	// RenewSSH should check policies.
+	if err := a.constraintsEngine.ValidateCertificate(newCert); err != nil {
+		var ee *errs.Error
+		if errors.As(err, &ee) {
+			return nil, errs.ApplyOptions(ee, opts...)
+		}
+		return nil, errs.InternalServerErr(err,
+			errs.WithKeyVal("serialNumber", oldCert.SerialNumber.String()),
+			errs.WithMessage("error renewing certificate"),
+		)
 	}
 
 	resp, err := a.x509CAService.RenewCertificate(ctx, &casapi.RenewCertificateRequest{
@@ -656,6 +694,18 @@ func (a *Authority) GetTLSCertificate(storage string, renew bool) (*tls.Certific
 	certTpl.NotBefore = now.Add(-1 * time.Minute)
 	certTpl.NotAfter = now.Add(24 * time.Hour)
 
+	// Policy and constraints require this fields to be set. At this moment they
+	// are only present in the extra extension.
+	certTpl.DNSNames = cr.DNSNames
+	certTpl.IPAddresses = cr.IPAddresses
+	certTpl.EmailAddresses = cr.EmailAddresses
+	certTpl.URIs = cr.URIs
+
+	// Fail if name constraints do not allow the server names.
+	if err := a.constraintsEngine.ValidateCertificate(certTpl); err != nil {
+		return fatal(err)
+	}
+
 	resp, err := a.x509CAService.CreateCertificate(context.Background(), &casapi.CreateCertificateRequest{
 		Template:       certTpl,
 		CSR:            cr,
@@ -707,4 +757,52 @@ func templatingError(err error) error {
 		cause = fmt.Errorf("cannot unmarshal %s at offset %d into Go value of type %s", typeError.Value, typeError.Offset, typeError.Type)
 	}
 	return errors.Wrap(cause, "error applying certificate template")
+}
+
+func callEnrichingWebhooksX509(webhookCtl webhookController, attData *provisioner.AttestationData, csr *x509.CertificateRequest) error {
+	if webhookCtl == nil {
+		return nil
+	}
+	var attested *webhook.AttestationData
+	if attData != nil {
+		attested = &webhook.AttestationData{
+			PermanentIdentifier: attData.PermanentIdentifier,
+		}
+	}
+	whEnrichReq, err := webhook.NewRequestBody(
+		webhook.WithX509CertificateRequest(csr),
+		webhook.WithAttestationData(attested),
+	)
+	if err != nil {
+		return err
+	}
+	if err := webhookCtl.Enrich(whEnrichReq); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func callAuthorizingWebhooksX509(webhookCtl webhookController, cert *x509util.Certificate, leaf *x509.Certificate, attData *provisioner.AttestationData) error {
+	if webhookCtl == nil {
+		return nil
+	}
+	var attested *webhook.AttestationData
+	if attData != nil {
+		attested = &webhook.AttestationData{
+			PermanentIdentifier: attData.PermanentIdentifier,
+		}
+	}
+	whAuthBody, err := webhook.NewRequestBody(
+		webhook.WithX509Certificate(cert, leaf),
+		webhook.WithAttestationData(attested),
+	)
+	if err != nil {
+		return err
+	}
+	if err := webhookCtl.Authorize(whAuthBody); err != nil {
+		return err
+	}
+
+	return nil
 }
