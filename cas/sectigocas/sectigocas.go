@@ -106,9 +106,12 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 	for _, u := range cr.URIs {
 		sans = append(sans, u.String())
 	}
-	issuer := "Internal"
+
+	issuer := ""
 	prov, ok := acme.ProvisionerFromContext(ctx)
 	if !ok || prov == nil {
+		issuer = "Internal"
+	} else {
 		acmeProv, ok := prov.(*provisioner.ACME)
 		if !ok || acmeProv == nil {
 			return nil, nil, errors.New("No ACME provisioner passed!")
@@ -124,6 +127,7 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 			}
 			issuer = fmt.Sprintf("%v (EAB: %v)", user.User, user.EabKey)
 		}
+
 	}
 
 	certificates, err := s.sslServiceClient.IssueCertificate(context.Background(), &pb.IssueSslRequest{
@@ -166,7 +170,7 @@ func (s *SectigoCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCerti
 	}, nil
 }
 
-func (s *SectigoCAS) RevokeCertificate(_ context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+func (s *SectigoCAS) RevokeCertificate(ctx context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
 	_, err := s.sslServiceClient.RevokeCertificate(context.Background(), &pb.RevokeSslRequest{
 		Identifier: &pb.RevokeSslRequest_Serial{Serial: req.SerialNumber},
 		Reason:     req.Reason,
