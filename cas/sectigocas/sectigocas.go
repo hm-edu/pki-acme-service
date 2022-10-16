@@ -106,26 +106,24 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 	for _, u := range cr.URIs {
 		sans = append(sans, u.String())
 	}
+	issuer := "Internal"
 	prov, ok := acme.ProvisionerFromContext(ctx)
 	if !ok || prov == nil {
-		return nil, nil, errors.New("No provisioner passed!")
-	}
-
-	acmeProv, ok := prov.(*provisioner.ACME)
-	if !ok || acmeProv == nil {
-		return nil, nil, errors.New("No ACME provisioner passed!")
-	}
-	issuer := ""
-	if acmeProv.RequireEAB {
-		acc := accountFromContext(ctx)
-		if acc == nil {
-			return nil, nil, errors.New("No account passed!")
+		acmeProv, ok := prov.(*provisioner.ACME)
+		if !ok || acmeProv == nil {
+			return nil, nil, errors.New("No ACME provisioner passed!")
 		}
-		user, err := s.eabClient.ResolveAccountId(context.Background(), &pb.ResolveAccountIdRequest{AccountId: acc.ID})
-		if err != nil {
-			return nil, nil, errors.WithMessage(err, "Error resolving user account!")
+		if acmeProv.RequireEAB {
+			acc := accountFromContext(ctx)
+			if acc == nil {
+				return nil, nil, errors.New("No account passed!")
+			}
+			user, err := s.eabClient.ResolveAccountId(context.Background(), &pb.ResolveAccountIdRequest{AccountId: acc.ID})
+			if err != nil {
+				return nil, nil, errors.WithMessage(err, "Error resolving user account!")
+			}
+			issuer = fmt.Sprintf("%v (EAB: %v)", user.User, user.EabKey)
 		}
-		issuer = fmt.Sprintf("%v (EAB: %v)", user.User, user.EabKey)
 	}
 
 	certificates, err := s.sslServiceClient.IssueCertificate(context.Background(), &pb.IssueSslRequest{
@@ -168,7 +166,7 @@ func (s *SectigoCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCerti
 	}, nil
 }
 
-func (s *SectigoCAS) RevokeCertificate(ctx context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+func (s *SectigoCAS) RevokeCertificate(_ context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
 	_, err := s.sslServiceClient.RevokeCertificate(context.Background(), &pb.RevokeSslRequest{
 		Identifier: &pb.RevokeSslRequest_Serial{Serial: req.SerialNumber},
 		Reason:     req.Reason,
