@@ -322,7 +322,7 @@ func (a *Authority) Rekey(ctx context.Context, oldCert *x509.Certificate, pk cry
 	// Create new certificate from previous values.
 	// Issuer, NotBefore, NotAfter and SubjectKeyId will be set by the CAS.
 	newCert := &x509.Certificate{
-		Subject:                     oldCert.Subject,
+		RawSubject:                  oldCert.RawSubject,
 		KeyUsage:                    oldCert.KeyUsage,
 		UnhandledCriticalExtensions: oldCert.UnhandledCriticalExtensions,
 		ExtKeyUsage:                 oldCert.ExtKeyUsage,
