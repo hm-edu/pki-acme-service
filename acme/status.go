@@ -16,5 +16,6 @@ var (
 	StatusReady = Status("ready")
 	//statusExpired     = "expired"
 	//statusActive      = "active"
+	StatusProcessing = Status("processing")
 	//statusProcessing  = "processing"
 )
