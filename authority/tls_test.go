@@ -844,7 +844,7 @@ ZYtQ9Ot36qc=
 		t.Run(name, func(t *testing.T) {
 			tc := genTestCase(t)
 
-			certChain, err := tc.auth.Sign(tc.csr, tc.signOpts, tc.extraOpts...)
+			certChain, err := tc.auth.Sign(context.TODO(), tc.csr, tc.signOpts, tc.extraOpts...)
 			if err != nil {
 				if assert.NotNil(t, tc.err, fmt.Sprintf("unexpected error: %s", err)) {
 					assert.Nil(t, certChain)
@@ -1058,9 +1058,9 @@ func TestAuthority_Renew(t *testing.T) {
 
 			var certChain []*x509.Certificate
 			if tc.auth != nil {
-				certChain, err = tc.auth.Renew(tc.cert)
+				certChain, err = tc.auth.Renew(context.Background(), tc.cert)
 			} else {
-				certChain, err = a.Renew(tc.cert)
+				certChain, err = a.Renew(context.Background(), tc.cert)
 			}
 			if err != nil {
 				if assert.NotNil(t, tc.err, fmt.Sprintf("unexpected error: %s", err)) {
@@ -1264,9 +1264,9 @@ func TestAuthority_Rekey(t *testing.T) {
 
 			var certChain []*x509.Certificate
 			if tc.auth != nil {
-				certChain, err = tc.auth.Rekey(tc.cert, tc.pk)
+				certChain, err = tc.auth.Rekey(context.Background(), tc.cert, tc.pk)
 			} else {
-				certChain, err = a.Rekey(tc.cert, tc.pk)
+				certChain, err = a.Rekey(context.Background(), tc.cert, tc.pk)
 			}
 			if err != nil {
 				if assert.NotNil(t, tc.err, fmt.Sprintf("unexpected error: %s", err)) {
@@ -1795,12 +1795,12 @@ func TestAuthority_constraints(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			_, err = auth.Sign(csr, provisioner.SignOptions{}, templateOption)
+			_, err = auth.Sign(context.Background(), csr, provisioner.SignOptions{}, templateOption)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Authority.Sign() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			_, err = auth.Renew(cert)
+			_, err = auth.Renew(context.Background(), cert)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Authority.Renew() error = %v, wantErr %v", err, tt.wantErr)
 			}

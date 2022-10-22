@@ -60,6 +60,7 @@ type Config struct {
 	IntermediateCert string               `json:"crt"`
 	IntermediateKey  string               `json:"key"`
 	Address          string               `json:"address"`
+	PublicAddress    string               `json:"publicAddress"`
 	InsecureAddress  string               `json:"insecureAddress"`
 	DNSNames         []string             `json:"dnsNames"`
 	KMS              *kms.Options         `json:"kms,omitempty"`
@@ -73,6 +74,8 @@ type Config struct {
 	Templates        *templates.Templates `json:"templates,omitempty"`
 	CommonName       string               `json:"commonName,omitempty"`
 	SkipValidation   bool                 `json:"-"`
+	Storage          string               `json:"storage,omitempty"`
+	ManagementHost   string               `json:"managementHost"`
 }
 
 // ASN1DN contains ASN1.DN attributes that are used in Subject and Issuer

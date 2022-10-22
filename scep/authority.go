@@ -65,7 +65,7 @@ type AuthorityOptions struct {
 
 // SignAuthority is the interface for a signing authority
 type SignAuthority interface {
-	Sign(cr *x509.CertificateRequest, opts provisioner.SignOptions, signOpts ...provisioner.SignOption) ([]*x509.Certificate, error)
+	Sign(ctx context.Context, cr *x509.CertificateRequest, opts provisioner.SignOptions, signOpts ...provisioner.SignOption) ([]*x509.Certificate, error)
 	LoadProvisionerByName(string) (provisioner.Interface, error)
 }
 
@@ -297,7 +297,7 @@ func (a *Authority) SignCSR(ctx context.Context, csr *x509.CertificateRequest, m
 	}
 	signOps = append(signOps, templateOptions)
 
-	certChain, err := a.signAuth.Sign(csr, opts, signOps...)
+	certChain, err := a.signAuth.Sign(ctx, csr, opts, signOps...)
 	if err != nil {
 		return nil, fmt.Errorf("error generating certificate for order: %w", err)
 	}
