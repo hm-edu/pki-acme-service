@@ -188,7 +188,7 @@ func (c *CloudCAS) GetCertificateAuthority(req *apiv1.GetCertificateAuthorityReq
 }
 
 // CreateCertificate signs a new certificate using Google Cloud CAS.
-func (c *CloudCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
+func (c *CloudCAS) CreateCertificate(_ context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
 	switch {
 	case req.Template == nil:
 		return nil, errors.New("createCertificateRequest `template` cannot be nil")
@@ -210,7 +210,7 @@ func (c *CloudCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv
 // RenewCertificate renews the given certificate using Google Cloud CAS.
 // Google's CAS does not support the renew operation, so this method uses
 // CreateCertificate.
-func (c *CloudCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
+func (c *CloudCAS) RenewCertificate(_ context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
 	switch {
 	case req.Template == nil:
 		return nil, errors.New("renewCertificateRequest `template` cannot be nil")
@@ -230,7 +230,7 @@ func (c *CloudCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.
 }
 
 // RevokeCertificate revokes a certificate using Google Cloud CAS.
-func (c *CloudCAS) RevokeCertificate(req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+func (c *CloudCAS) RevokeCertificate(_ context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
 	reason, ok := revocationCodeMap[req.ReasonCode]
 	switch {
 	case !ok:
