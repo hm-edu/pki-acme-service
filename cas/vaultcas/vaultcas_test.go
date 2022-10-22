@@ -256,7 +256,7 @@ func TestVaultCAS_CreateCertificate(t *testing.T) {
 				client: tt.fields.client,
 				config: tt.fields.options,
 			}
-			got, err := c.CreateCertificate(tt.args.req)
+			got, err := c.CreateCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("VaultCAS.CreateCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -379,7 +379,7 @@ func TestVaultCAS_RevokeCertificate(t *testing.T) {
 				client: tt.fields.client,
 				config: tt.fields.options,
 			}
-			got, err := s.RevokeCertificate(tt.args.req)
+			got, err := s.RevokeCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("VaultCAS.RevokeCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -429,7 +429,7 @@ func TestVaultCAS_RenewCertificate(t *testing.T) {
 				client: tt.fields.client,
 				config: tt.fields.options,
 			}
-			got, err := s.RenewCertificate(tt.args.req)
+			got, err := s.RenewCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("VaultCAS.RenewCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
