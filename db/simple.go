@@ -26,6 +26,11 @@ func newSimpleDB(c *Config) (*SimpleDB, error) {
 	return db, nil
 }
 
+// Ping noop
+func (s *SimpleDB) Ping() error {
+	return nil
+}
+
 // IsRevoked noop
 func (s *SimpleDB) IsRevoked(sn string) (bool, error) {
 	return false, nil

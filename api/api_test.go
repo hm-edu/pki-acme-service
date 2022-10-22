@@ -221,6 +221,10 @@ func (m *mockAuthority) GetCertificateRevocationList() ([]byte, error) {
 	return m.ret1.([]byte), m.err
 }
 
+func (m *mockAuthority) Health() error {
+	return nil
+}
+
 // TODO: remove once Authorize is deprecated.
 func (m *mockAuthority) Authorize(ctx context.Context, ott string) ([]provisioner.SignOption, error) {
 	if m.authorize != nil {
@@ -847,6 +851,7 @@ func Test_caHandler_Route(t *testing.T) {
 func Test_Health(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/health", nil)
 	w := httptest.NewRecorder()
+	mockMustAuthority(t, &mockAuthority{})
 	Health(w, req)
 
 	res := w.Result()
