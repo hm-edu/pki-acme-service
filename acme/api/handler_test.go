@@ -17,6 +17,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/go-cmp/cmp"
+	pb "github.com/hm-edu/portal-apis"
 	"github.com/pkg/errors"
 
 	"go.step.sm/crypto/jose"
@@ -25,7 +26,20 @@ import (
 	"github.com/smallstep/assert"
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"google.golang.org/grpc"
 )
+
+type MockClient struct {
+	Missing []string
+}
+
+func (c *MockClient) CheckEABPermissions(ctx context.Context, in *pb.CheckEABPermissionRequest, opts ...grpc.CallOption) (*pb.CheckEABPermissionResponse, error) {
+	return &pb.CheckEABPermissionResponse{Missing: c.Missing}, nil
+}
+
+func (c *MockClient) ResolveAccountId(ctx context.Context, in *pb.ResolveAccountIdRequest, opts ...grpc.CallOption) (*pb.ResolveAccountIdResponse, error) { //nolint
+	return nil, nil
+}
 
 type mockClient struct {
 	get       func(url string) (*http.Response, error)
@@ -264,7 +278,7 @@ func TestHandler_GetAuthorization(t *testing.T) {
 		},
 		"fail/nil-account": func(t *testing.T) test {
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, nil)
+			ctx = context.WithValue(ctx, AccContextKey, nil)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -274,7 +288,7 @@ func TestHandler_GetAuthorization(t *testing.T) {
 		},
 		"fail/db.GetAuthorization-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -287,7 +301,7 @@ func TestHandler_GetAuthorization(t *testing.T) {
 		},
 		"fail/account-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -305,7 +319,7 @@ func TestHandler_GetAuthorization(t *testing.T) {
 		},
 		"fail/db.UpdateAuthorization-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -330,7 +344,7 @@ func TestHandler_GetAuthorization(t *testing.T) {
 		"ok": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -428,7 +442,7 @@ func TestHandler_GetCertificate(t *testing.T) {
 			}
 		},
 		"fail/nil-account": func(t *testing.T) test {
-			ctx := context.WithValue(context.Background(), accContextKey, nil)
+			ctx := context.WithValue(context.Background(), AccContextKey, nil)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -438,7 +452,7 @@ func TestHandler_GetCertificate(t *testing.T) {
 		},
 		"fail/db.GetCertificate-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -451,7 +465,7 @@ func TestHandler_GetCertificate(t *testing.T) {
 		},
 		"fail/account-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -467,7 +481,7 @@ func TestHandler_GetCertificate(t *testing.T) {
 		},
 		"ok": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -552,14 +566,14 @@ func TestHandler_GetChallenge(t *testing.T) {
 		"fail/nil-account": func(t *testing.T) test {
 			return test{
 				db:         &acme.MockDB{},
-				ctx:        context.WithValue(context.Background(), accContextKey, nil),
+				ctx:        context.WithValue(context.Background(), AccContextKey, nil),
 				statusCode: 400,
 				err:        acme.NewError(acme.ErrorAccountDoesNotExistType, "account does not exist"),
 			}
 		},
 		"fail/no-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -570,7 +584,7 @@ func TestHandler_GetChallenge(t *testing.T) {
 		"fail/nil-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, nil)
 			return test{
 				db:         &acme.MockDB{},
@@ -582,7 +596,7 @@ func TestHandler_GetChallenge(t *testing.T) {
 		"fail/db.GetChallenge-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{isEmptyJSON: true})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -601,7 +615,7 @@ func TestHandler_GetChallenge(t *testing.T) {
 		"fail/account-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{isEmptyJSON: true})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -620,7 +634,7 @@ func TestHandler_GetChallenge(t *testing.T) {
 		"fail/no-jwk": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{isEmptyJSON: true})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -639,7 +653,7 @@ func TestHandler_GetChallenge(t *testing.T) {
 		"fail/nil-jwk": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{isEmptyJSON: true})
 			ctx = context.WithValue(ctx, jwkContextKey, nil)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
@@ -659,7 +673,7 @@ func TestHandler_GetChallenge(t *testing.T) {
 		"fail/validate-challenge-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{isEmptyJSON: true})
 			_jwk, err := jose.GenerateJWK("EC", "P-256", "ES256", "sig", "", 0)
 			assert.FatalError(t, err)
@@ -699,7 +713,7 @@ func TestHandler_GetChallenge(t *testing.T) {
 		"ok": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{isEmptyJSON: true})
 			_jwk, err := jose.GenerateJWK("EC", "P-256", "ES256", "sig", "", 0)
 			assert.FatalError(t, err)
