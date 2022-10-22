@@ -67,7 +67,7 @@ func New(ctx context.Context, opts apiv1.Options) (*StepCAS, error) {
 
 // CreateCertificate uses the step-ca sign request with the configured
 // provisioner to get a new certificate from the certificate authority.
-func (s *StepCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
+func (s *StepCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
 	switch {
 	case req.CSR == nil:
 		return nil, errors.New("createCertificateRequest `csr` cannot be nil")
@@ -100,12 +100,12 @@ func (s *StepCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1
 
 // RenewCertificate will always return a non-implemented error as mTLS renewals
 // are not supported yet.
-func (s *StepCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
+func (s *StepCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
 	return nil, apiv1.NotImplementedError{Message: "stepCAS does not support mTLS renewals"}
 }
 
 // RevokeCertificate revokes a certificate.
-func (s *StepCAS) RevokeCertificate(req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+func (s *StepCAS) RevokeCertificate(ctx context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
 	if req.SerialNumber == "" && req.Certificate == nil {
 		return nil, errors.New("revokeCertificateRequest `serialNumber` or `certificate` are required")
 	}

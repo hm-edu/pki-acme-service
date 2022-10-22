@@ -709,7 +709,7 @@ func TestStepCAS_CreateCertificate(t *testing.T) {
 				authorityID: "authority-id",
 				fingerprint: tt.fields.fingerprint,
 			}
-			got, err := s.CreateCertificate(tt.args.req)
+			got, err := s.CreateCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("StepCAS.CreateCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -757,7 +757,7 @@ func TestStepCAS_RenewCertificate(t *testing.T) {
 				client:      tt.fields.client,
 				fingerprint: tt.fields.fingerprint,
 			}
-			got, err := s.RenewCertificate(tt.args.req)
+			got, err := s.RenewCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("StepCAS.RenewCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -854,7 +854,7 @@ func TestStepCAS_RevokeCertificate(t *testing.T) {
 				client:      tt.fields.client,
 				fingerprint: tt.fields.fingerprint,
 			}
-			got, err := s.RevokeCertificate(tt.args.req)
+			got, err := s.RevokeCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("StepCAS.RevokeCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return

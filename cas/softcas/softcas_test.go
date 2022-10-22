@@ -338,7 +338,7 @@ func TestSoftCAS_CreateCertificate(t *testing.T) {
 				Signer:            tt.fields.Signer,
 				CertificateSigner: tt.fields.CertificateSigner,
 			}
-			got, err := c.CreateCertificate(tt.args.req)
+			got, err := c.CreateCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SoftCAS.CreateCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -382,7 +382,7 @@ func TestSoftCAS_CreateCertificate_pss(t *testing.T) {
 		CertificateChain: []*x509.Certificate{iss},
 		Signer:           signer,
 	}
-	cert, err := c.CreateCertificate(&apiv1.CreateCertificateRequest{
+	cert, err := c.CreateCertificate(context.Background(), &apiv1.CreateCertificateRequest{
 		Template: &x509.Certificate{
 			Subject:      pkix.Name{CommonName: "test.smallstep.com"},
 			DNSNames:     []string{"test.smallstep.com"},
@@ -468,7 +468,7 @@ func TestSoftCAS_CreateCertificate_ec_rsa(t *testing.T) {
 		CertificateChain: []*x509.Certificate{iss},
 		Signer:           intSigner,
 	}
-	cert, err := c.CreateCertificate(&apiv1.CreateCertificateRequest{
+	cert, err := c.CreateCertificate(context.Background(), &apiv1.CreateCertificateRequest{
 		Template: &x509.Certificate{
 			Subject:      pkix.Name{CommonName: "test.smallstep.com"},
 			DNSNames:     []string{"test.smallstep.com"},
@@ -566,7 +566,7 @@ func TestSoftCAS_RenewCertificate(t *testing.T) {
 				Signer:            tt.fields.Signer,
 				CertificateSigner: tt.fields.CertificateSigner,
 			}
-			got, err := c.RenewCertificate(tt.args.req)
+			got, err := c.RenewCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SoftCAS.RenewCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -634,7 +634,7 @@ func TestSoftCAS_RevokeCertificate(t *testing.T) {
 				Signer:            tt.fields.Signer,
 				CertificateSigner: tt.fields.CertificateSigner,
 			}
-			got, err := c.RevokeCertificate(tt.args.req)
+			got, err := c.RevokeCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SoftCAS.RevokeCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
