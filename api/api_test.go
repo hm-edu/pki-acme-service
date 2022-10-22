@@ -262,7 +262,7 @@ func (m *mockAuthority) SignWithContext(ctx context.Context, cr *x509.Certificat
 	return []*x509.Certificate{m.ret1.(*x509.Certificate), m.ret2.(*x509.Certificate)}, m.err
 }
 
-func (m *mockAuthority) Renew(cert *x509.Certificate) ([]*x509.Certificate, error) {
+func (m *mockAuthority) Renew(_ context.Context, cert *x509.Certificate) ([]*x509.Certificate, error) {
 	if m.renew != nil {
 		return m.renew(cert)
 	}
@@ -276,7 +276,7 @@ func (m *mockAuthority) RenewContext(ctx context.Context, oldcert *x509.Certific
 	return []*x509.Certificate{m.ret1.(*x509.Certificate), m.ret2.(*x509.Certificate)}, m.err
 }
 
-func (m *mockAuthority) Rekey(oldcert *x509.Certificate, pk crypto.PublicKey) ([]*x509.Certificate, error) {
+func (m *mockAuthority) Rekey(_ context.Context, oldcert *x509.Certificate, pk crypto.PublicKey) ([]*x509.Certificate, error) {
 	if m.rekey != nil {
 		return m.rekey(oldcert, pk)
 	}
