@@ -4,8 +4,11 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 
@@ -228,8 +231,51 @@ func (db *DB) GetExternalAccountKeyByReference(ctx context.Context, provisionerI
 }
 
 func (db *DB) GetExternalAccountKeyByAccountID(ctx context.Context, provisionerID, accountID string) (*acme.ExternalAccountKey, error) {
-	//nolint:nilnil // legacy
-	return nil, nil
+	externalAccountKeyMutex.RLock()
+	defer externalAccountKeyMutex.RUnlock()
+
+	logrus.Debug(fmt.Sprintf("searching for eak keys bount to provisioner %v", provisionerID))
+	// cursor and limit are ignored in open source, at least for now.
+
+	var eakIDs []string
+	r, err := db.db.Get(externalAccountKeyIDsByProvisionerIDTable, []byte(provisionerID))
+	if err != nil {
+		if !nosqlDB.IsErrNotFound(err) {
+			return nil, errors.Wrapf(err, "error loading ACME EAB Key IDs for provisioner %s", provisionerID)
+		}
+		// it may happen that no record is found; we'll continue with an empty slice
+	} else {
+		if err := json.Unmarshal(r, &eakIDs); err != nil {
+			return nil, errors.Wrapf(err, "error unmarshaling ACME EAB Key IDs for provisioner %s", provisionerID)
+		}
+	}
+	logrus.Debug(fmt.Sprintf("found %v eak keys (%v)", len(eakIDs), eakIDs))
+	for _, eakID := range eakIDs {
+		if eakID == "" {
+			continue // shouldn't happen; just in case
+		}
+		eak, err := db.getDBExternalAccountKey(ctx, eakID)
+		if err != nil {
+			if !nosqlDB.IsErrNotFound(err) {
+				return nil, errors.Wrapf(err, "error retrieving ACME EAB Key for provisioner %s and keyID %s", provisionerID, eakID)
+			}
+		}
+		logrus.Debug(fmt.Sprintf("loaded %v", eak))
+		if eak.AccountID == accountID {
+			return &acme.ExternalAccountKey{
+				ID:            eak.ID,
+				HmacKey:       eak.HmacKey,
+				ProvisionerID: eak.ProvisionerID,
+				Reference:     eak.Reference,
+				AccountID:     eak.AccountID,
+				CreatedAt:     eak.CreatedAt,
+				BoundAt:       eak.BoundAt,
+			}, nil
+		}
+		logrus.Debug(fmt.Sprintf("%s does not match %s", eak.AccountID, accountID))
+	}
+
+	return nil, errors.Errorf("ACME EAB Key for account id %s not found", accountID)
 }
 
 func (db *DB) UpdateExternalAccountKey(ctx context.Context, provisionerID string, eak *acme.ExternalAccountKey) error {
@@ -311,7 +357,14 @@ func (db *DB) addEAKID(ctx context.Context, provisionerID, eakID string) error {
 	}
 
 	if err = db.save(ctx, provisionerID, _new, _old, "externalAccountKeyIDsByProvisionerID", externalAccountKeyIDsByProvisionerIDTable); err != nil {
-		return errors.Wrapf(err, "error saving eakIDs index for provisioner %s", provisionerID)
+		if len(eakIDs) == 0 {
+			logrus.Warnf("error replacing empty eakID list for provisioner %s", provisionerID)
+			if err_internal := db.save(ctx, provisionerID, _new, []string{}, "externalAccountKeyIDsByProvisionerID", externalAccountKeyIDsByProvisionerIDTable); err_internal != nil {
+				return errors.Wrapf(err, "error saving eakIDs index for provisioner %s", provisionerID)
+			}
+		} else {
+			return errors.Wrapf(err, "error saving eakIDs index for provisioner %s", provisionerID)
+		}
 	}
 
 	return nil
