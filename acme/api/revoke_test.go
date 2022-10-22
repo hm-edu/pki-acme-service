@@ -281,7 +281,7 @@ type mockCA struct {
 	MockAreSANsallowed func(ctx context.Context, sans []string) error
 }
 
-func (m *mockCA) Sign(cr *x509.CertificateRequest, opts provisioner.SignOptions, signOpts ...provisioner.SignOption) ([]*x509.Certificate, error) {
+func (m *mockCA) Sign(ctx context.Context, cr *x509.CertificateRequest, opts provisioner.SignOptions, signOpts ...provisioner.SignOption) ([]*x509.Certificate, error) {
 	return nil, nil
 }
 
@@ -688,7 +688,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
-			ctx = context.WithValue(ctx, accContextKey, nil)
+			ctx = context.WithValue(ctx, AccContextKey, nil)
 			db := &acme.MockDB{
 				MockGetCertificateBySerial: func(ctx context.Context, serial string) (*acme.Certificate, error) {
 					assert.Equals(t, cert.SerialNumber.String(), serial)
@@ -707,7 +707,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 		"fail/account-not-valid": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID", Status: acme.StatusInvalid}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
@@ -736,7 +736,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 		"fail/account-not-authorized": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID", Status: acme.StatusValid}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
@@ -815,7 +815,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 		"fail/certificate-revoked-check-fails": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID", Status: acme.StatusValid}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
@@ -848,7 +848,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 		"fail/certificate-already-revoked": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID", Status: acme.StatusValid}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
 			db := &acme.MockDB{
@@ -886,7 +886,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 			assert.FatalError(t, err)
 			acc := &acme.Account{ID: "accountID", Status: acme.StatusValid}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: invalidReasonCodePayloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
 			db := &acme.MockDB{
@@ -924,7 +924,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 			}
 			acc := &acme.Account{ID: "accountID", Status: acme.StatusValid}
 			ctx := acme.NewProvisionerContext(context.Background(), mockACMEProv)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
 			db := &acme.MockDB{
@@ -956,7 +956,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 		"fail/ca.Revoke": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID", Status: acme.StatusValid}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
 			db := &acme.MockDB{
@@ -988,7 +988,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 		"fail/ca.Revoke-already-revoked": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID", Status: acme.StatusValid}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
 			db := &acme.MockDB{
@@ -1019,7 +1019,7 @@ func TestHandler_RevokeCert(t *testing.T) {
 		"ok/using-account-key": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID", Status: acme.StatusValid}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, jwsContextKey, jws)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)

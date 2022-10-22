@@ -1,0 +1,7 @@
+version: "1"
+rules:                      
+  - base: master            
+    upstream: smallstep:master    
+    mergeMethod: merge 
+    assignees:              
+      - fritterhoff
