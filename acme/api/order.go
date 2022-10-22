@@ -252,6 +252,15 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 		NotAfter:         nor.NotAfter,
 	}
 
+	if missing, err := checkPermission(ctx, o.Identifiers, eak); len(missing) != 0 || err != nil {
+		if err != nil {
+			render.Error(w, r, acme.NewError(acme.ErrorServerInternalType, "Internal server error"))
+			return
+		}
+		render.Error(w, r, acme.NewError(acme.ErrorRejectedIdentifierType, "Missing registration for domain(s) %v", missing))
+		return
+	}
+
 	for i, identifier := range o.Identifiers {
 		az := &acme.Authorization{
 			AccountID:  acc.ID,
@@ -424,6 +433,15 @@ func GetOrder(w http.ResponseWriter, r *http.Request) {
 	linker.LinkOrder(ctx, o)
 
 	w.Header().Set("Location", linker.GetLink(ctx, acme.OrderLinkType, o.ID))
+	if o.Status == acme.StatusProcessing {
+		// Due to the bad behavior of the k8s cert-manager we must catch this client using the User-Agent and handle it in a special way.
+		// The cert-manager does not repect the retry after flags and will retry too fast.
+		if strings.Contains(r.UserAgent(), "cert-manager") {
+			render.Error(w, r, acme.NewErrorISE("Request is processing"))
+			return
+		}
+		w.Header().Set("Retry-After", "10")
+	}
 	render.JSON(w, r, o)
 }
 
@@ -476,14 +494,14 @@ func FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ca := mustAuthority(ctx)
-	if err = o.Finalize(ctx, db, fr.csr, ca, prov); err != nil {
+	if _, err = o.Finalize(ctx, db, fr.csr, ca, prov); err != nil {
 		render.Error(w, r, acme.WrapErrorISE(err, "error finalizing order"))
 		return
 	}
 
 	linker.LinkOrder(ctx, o)
-
 	w.Header().Set("Location", linker.GetLink(ctx, acme.OrderLinkType, o.ID))
+	w.Header().Set("Retry-After", "20")
 	render.JSON(w, r, o)
 }
 
