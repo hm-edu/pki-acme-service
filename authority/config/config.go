@@ -70,6 +70,7 @@ type Config struct {
 	IntermediateCert string               `json:"crt"`
 	IntermediateKey  string               `json:"key"`
 	Address          string               `json:"address"`
+	PublicAddress    string               `json:"publicAddress"`
 	InsecureAddress  string               `json:"insecureAddress"`
 	DNSNames         []string             `json:"dnsNames"`
 	KMS              *kms.Options         `json:"kms,omitempty"`
@@ -84,6 +85,8 @@ type Config struct {
 	CommonName       string               `json:"commonName,omitempty"`
 	CRL              *CRLConfig           `json:"crl,omitempty"`
 	SkipValidation   bool                 `json:"-"`
+	Storage          string               `json:"storage,omitempty"`
+	ManagementHost   string               `json:"managementHost"`
 
 	// Keeps record of the filename the Config is read from
 	loadedFromFilepath string

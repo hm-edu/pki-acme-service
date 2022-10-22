@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -17,6 +18,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"go.opentelemetry.io/contrib/propagators/b3"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/acme"
 	acmeAPI "github.com/smallstep/certificates/acme/api"
@@ -35,6 +43,10 @@ import (
 	"github.com/smallstep/nosql"
 	"go.step.sm/cli-utils/step"
 	"go.step.sm/crypto/x509util"
+
+	pb "github.com/hm-edu/portal-apis"
+
+	"github.com/smallstep/certificates/cas/sectigocas/eab"
 )
 
 type options struct {
@@ -124,10 +136,12 @@ type CA struct {
 	auth        *authority.Authority
 	config      *config.Config
 	srv         *server.Server
+	public      *server.Server
 	insecureSrv *server.Server
 	opts        *options
 	renewer     *TLSRenewer
 	compactStop chan struct{}
+	tp          *sdktrace.TracerProvider
 }
 
 // New creates and initializes the CA with the given configuration and options.
@@ -143,6 +157,23 @@ func New(cfg *config.Config, opts ...Option) (*CA, error) {
 
 // Init initializes the CA with the given configuration.
 func (ca *CA) Init(cfg *config.Config) (*CA, error) {
+	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint())
+	if err != nil {
+		return nil, err
+	}
+	ca.tp = sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(
+			resource.NewWithAttributes(
+				semconv.SchemaURL,
+				semconv.ServiceNameKey.String("certificates"),
+			)),
+	)
+	otel.SetTracerProvider(ca.tp)
+
+	otel.SetTextMapPropagator(b3.New())
+
 	// Set password, it's ok to set nil password, the ca will prompt for them if
 	// they are required.
 	opts := []authority.Option{
@@ -172,7 +203,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 	}
 	ca.auth = auth
 
-	tlsConfig, clientTLSConfig, err := ca.getTLSConfig(auth)
+	tlsConfig, clientTLSConfig, err := ca.getTLSConfig(auth, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -182,6 +213,12 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 	// Using chi as the main router
 	mux := chi.NewRouter()
 	handler := http.Handler(mux)
+	var publicHandler http.Handler
+	var publicMux *chi.Mux
+	if cfg.PublicAddress != "" {
+		publicMux = chi.NewRouter()
+		publicHandler = http.Handler(publicMux)
+	}
 
 	insecureMux := chi.NewRouter()
 	insecureHandler := http.Handler(insecureMux)
@@ -228,8 +265,18 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		mux.Route("/2.0/acme", func(r chi.Router) {
 			acmeAPI.Route(r)
 		})
-	}
 
+		if cfg.PublicAddress != "" {
+			publicMux.Route("/acme", func(r chi.Router) {
+				acmeAPI.Route(r)
+			})
+			// Use 2.0 because, at the moment, our ACME api is only compatible with v2.0
+			// of the ACME spec.
+			publicMux.Route("/2.0/acme", func(r chi.Router) {
+				acmeAPI.Route(r)
+			})
+		}
+	}
 	// Admin API Router
 	if cfg.AuthorityConfig.EnableAdmin {
 		adminDB := auth.GetAdminDatabase()
@@ -285,6 +332,9 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		}
 		handler = m.Middleware(handler)
 		insecureHandler = m.Middleware(insecureHandler)
+		if cfg.PublicAddress != "" {
+			publicHandler = m.Middleware(publicHandler)
+		}
 	}
 
 	// Add logger if configured
@@ -295,14 +345,27 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		}
 		handler = logger.Middleware(handler)
 		insecureHandler = logger.Middleware(insecureHandler)
+		if cfg.PublicAddress != "" {
+			publicHandler = logger.Middleware(publicHandler)
+		}
 	}
 
 	// Create context with all the necessary values.
-	baseContext := buildContext(auth, scepAuthority, acmeDB, acmeLinker)
+	client, err := eab.Connect(cfg.ManagementHost)
+	if err != nil {
+		return nil, errors.Wrap(err, "error connecting to EAB")
+	}
+	baseContext := buildContext(auth, scepAuthority, acmeDB, acmeLinker, client)
 
 	ca.srv = server.New(cfg.Address, handler, tlsConfig)
 	ca.srv.BaseContext = func(net.Listener) context.Context {
 		return baseContext
+	}
+	if cfg.PublicAddress != "" {
+		ca.public = server.New(cfg.PublicAddress, publicHandler, tlsConfig)
+		ca.public.BaseContext = func(net.Listener) context.Context {
+			return baseContext
+		}
 	}
 
 	// only start the insecure server if the insecure address is configured
@@ -339,7 +402,7 @@ func (ca *CA) shouldServeInsecureServer() bool {
 }
 
 // buildContext builds the server base context.
-func buildContext(a *authority.Authority, scepAuthority *scep.Authority, acmeDB acme.DB, acmeLinker acme.Linker) context.Context {
+func buildContext(a *authority.Authority, scepAuthority *scep.Authority, acmeDB acme.DB, acmeLinker acme.Linker, eabClient pb.EABServiceClient) context.Context {
 	ctx := authority.NewContext(context.Background(), a)
 	if authDB := a.GetDatabase(); authDB != nil {
 		ctx = db.NewContext(ctx, authDB)
@@ -352,6 +415,9 @@ func buildContext(a *authority.Authority, scepAuthority *scep.Authority, acmeDB 
 	}
 	if acmeDB != nil {
 		ctx = acme.NewContext(ctx, acmeDB, acme.NewClient(), acmeLinker, nil)
+	}
+	if eabClient != nil {
+		ctx = eab.NewContext(ctx, eabClient)
 	}
 	return ctx
 }
@@ -409,6 +475,13 @@ func (ca *CA) Run() error {
 		defer wg.Done()
 		errs <- ca.srv.ListenAndServe()
 	}()
+	wg.Add(1)
+	if ca.public != nil {
+		go func() {
+			defer wg.Done()
+			errs <- ca.public.ListenAndServe()
+		}()
+	}
 
 	// wait till error occurs; ensures the servers keep listening
 	err := <-errs
@@ -426,14 +499,24 @@ func (ca *CA) Stop() error {
 		log.Printf("error stopping ca.Authority: %+v\n", err)
 	}
 	var insecureShutdownErr error
+	var publicErr error
 	if ca.insecureSrv != nil {
 		insecureShutdownErr = ca.insecureSrv.Shutdown()
 	}
 
+	if ca.public != nil {
+		publicErr = ca.public.Shutdown()
+	}
 	secureErr := ca.srv.Shutdown()
-
+	err := ca.tp.Shutdown(context.Background())
+	if err != nil {
+		return err
+	}
 	if insecureShutdownErr != nil {
 		return insecureShutdownErr
+	}
+	if publicErr != nil {
+		return publicErr
 	}
 	return secureErr
 }
@@ -484,6 +567,12 @@ func (ca *CA) Reload() error {
 		logContinue("Reload failed because server could not be replaced.")
 		return errors.Wrap(err, "error reloading server")
 	}
+	if ca.public != nil {
+		if err = ca.public.Reload(newCA.public); err != nil {
+			logContinue("Reload failed because server could not be replaced.")
+			return errors.Wrap(err, "error reloading server")
+		}
+	}
 
 	// 1. Stop previous renewer
 	// 2. Safely shutdown any internal resources (e.g. key manager)
@@ -500,9 +589,17 @@ func (ca *CA) Reload() error {
 
 // get TLSConfig returns separate TLSConfigs for server and client with the
 // same self-renewing certificate.
-func (ca *CA) getTLSConfig(auth *authority.Authority) (*tls.Config, *tls.Config, error) {
+func (ca *CA) getTLSConfig(auth *authority.Authority, cfg *config.Config) (*tls.Config, *tls.Config, error) {
+
+	if cfg.Storage != "" {
+		err := os.Mkdir(cfg.Storage, 0600)
+		if err != nil && !os.IsExist(err) {
+			return nil, nil, errors.Wrap(err, "error creating storage directory")
+		}
+	}
+
 	// Create initial TLS certificate
-	tlsCrt, err := auth.GetTLSCertificate()
+	tlsCrt, err := auth.GetTLSCertificate(cfg.Storage, false)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -513,7 +610,9 @@ func (ca *CA) getTLSConfig(auth *authority.Authority) (*tls.Config, *tls.Config,
 		ca.renewer.Stop()
 	}
 
-	ca.renewer, err = NewTLSRenewer(tlsCrt, auth.GetTLSCertificate)
+	ca.renewer, err = NewTLSRenewer(tlsCrt, func() (*tls.Certificate, error) {
+		return auth.GetTLSCertificate(cfg.Storage, true)
+	})
 	if err != nil {
 		return nil, nil, err
 	}
