@@ -496,7 +496,16 @@ func TestOrder_Finalize(t *testing.T) {
 					MockGetAuthorization: func(ctx context.Context, id string) (*Authorization, error) {
 						return &Authorization{ID: id, Status: StatusValid}, nil
 					},
-				},
+					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
+						assert.Equals(t, updo.CertificateID, "")
+						assert.Equals(t, updo.Status, StatusProcessing)
+						assert.Equals(t, updo.ID, o.ID)
+						assert.Equals(t, updo.AccountID, o.AccountID)
+						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
+						assert.Equals(t, updo.AuthorizationIDs, o.AuthorizationIDs)
+						assert.Equals(t, updo.Identifiers, o.Identifiers)
+						return nil
+					}},
 				err: NewErrorISE("error retrieving authorization options from ACME provisioner: force"),
 			}
 		},
@@ -539,6 +548,16 @@ func TestOrder_Finalize(t *testing.T) {
 				db: &MockDB{
 					MockGetAuthorization: func(ctx context.Context, id string) (*Authorization, error) {
 						return &Authorization{ID: id, Status: StatusValid}, nil
+					},
+					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
+						assert.Equals(t, updo.CertificateID, "")
+						assert.Equals(t, updo.Status, StatusProcessing)
+						assert.Equals(t, updo.ID, o.ID)
+						assert.Equals(t, updo.AccountID, o.AccountID)
+						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
+						assert.Equals(t, updo.AuthorizationIDs, o.AuthorizationIDs)
+						assert.Equals(t, updo.Identifiers, o.Identifiers)
+						return nil
 					},
 				},
 				err: NewErrorISE("error creating template options from ACME provisioner: error unmarshaling template data: invalid character 'o' in literal false (expecting 'a')"),
@@ -586,7 +605,15 @@ func TestOrder_Finalize(t *testing.T) {
 					MockGetAuthorization: func(ctx context.Context, id string) (*Authorization, error) {
 						return &Authorization{ID: id, Status: StatusValid}, nil
 					},
-				},
+					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
+						assert.Equals(t, updo.CertificateID, "")
+						assert.Equals(t, updo.ID, o.ID)
+						assert.Equals(t, updo.AccountID, o.AccountID)
+						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
+						assert.Equals(t, updo.AuthorizationIDs, o.AuthorizationIDs)
+						assert.Equals(t, updo.Identifiers, o.Identifiers)
+						return nil
+					}},
 				err: NewErrorISE("error signing certificate for order oID: force"),
 			}
 		},
@@ -642,6 +669,14 @@ func TestOrder_Finalize(t *testing.T) {
 						assert.Equals(t, cert.Leaf, foo)
 						assert.Equals(t, cert.Intermediates, []*x509.Certificate{bar, baz})
 						return errors.New("force")
+					},
+					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
+						assert.Equals(t, updo.ID, o.ID)
+						assert.Equals(t, updo.AccountID, o.AccountID)
+						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
+						assert.Equals(t, updo.AuthorizationIDs, o.AuthorizationIDs)
+						assert.Equals(t, updo.Identifiers, o.Identifiers)
+						return nil
 					},
 				},
 				err: NewErrorISE("error creating certificate for order oID: force"),
@@ -702,8 +737,8 @@ func TestOrder_Finalize(t *testing.T) {
 						return nil
 					},
 					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
-						assert.Equals(t, updo.CertificateID, "certID")
-						assert.Equals(t, updo.Status, StatusValid)
+						assert.Equals(t, updo.CertificateID, "")
+						assert.Equals(t, updo.Status, StatusProcessing)
 						assert.Equals(t, updo.ID, o.ID)
 						assert.Equals(t, updo.AccountID, o.AccountID)
 						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
@@ -791,8 +826,8 @@ func TestOrder_Finalize(t *testing.T) {
 						return nil
 					},
 					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
-						assert.Equals(t, updo.CertificateID, "certID")
-						assert.Equals(t, updo.Status, StatusValid)
+						// assert.Equals(t, updo.CertificateID, "certID")
+						// assert.Equals(t, updo.Status, StatusValid)
 						assert.Equals(t, updo.ID, o.ID)
 						assert.Equals(t, updo.AccountID, o.AccountID)
 						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
@@ -895,8 +930,8 @@ func TestOrder_Finalize(t *testing.T) {
 						return nil
 					},
 					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
-						assert.Equals(t, updo.CertificateID, "certID")
-						assert.Equals(t, updo.Status, StatusValid)
+						// assert.Equals(t, updo.CertificateID, "certID")
+						// assert.Equals(t, updo.Status, StatusValid)
 						assert.Equals(t, updo.ID, o.ID)
 						assert.Equals(t, updo.AccountID, o.AccountID)
 						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
@@ -994,8 +1029,8 @@ func TestOrder_Finalize(t *testing.T) {
 						return nil
 					},
 					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
-						assert.Equals(t, updo.CertificateID, "certID")
-						assert.Equals(t, updo.Status, StatusValid)
+						// assert.Equals(t, updo.CertificateID, "certID")
+						// assert.Equals(t, updo.Status, StatusValid)
 						assert.Equals(t, updo.ID, o.ID)
 						assert.Equals(t, updo.AccountID, o.AccountID)
 						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
@@ -1061,8 +1096,6 @@ func TestOrder_Finalize(t *testing.T) {
 						return nil
 					},
 					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
-						assert.Equals(t, updo.CertificateID, "certID")
-						assert.Equals(t, updo.Status, StatusValid)
 						assert.Equals(t, updo.ID, o.ID)
 						assert.Equals(t, updo.AccountID, o.AccountID)
 						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
@@ -1125,8 +1158,6 @@ func TestOrder_Finalize(t *testing.T) {
 						return nil
 					},
 					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
-						assert.Equals(t, updo.CertificateID, "certID")
-						assert.Equals(t, updo.Status, StatusValid)
 						assert.Equals(t, updo.ID, o.ID)
 						assert.Equals(t, updo.AccountID, o.AccountID)
 						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
@@ -1192,8 +1223,6 @@ func TestOrder_Finalize(t *testing.T) {
 						return nil
 					},
 					MockUpdateOrder: func(ctx context.Context, updo *Order) error {
-						assert.Equals(t, updo.CertificateID, "certID")
-						assert.Equals(t, updo.Status, StatusValid)
 						assert.Equals(t, updo.ID, o.ID)
 						assert.Equals(t, updo.AccountID, o.AccountID)
 						assert.Equals(t, updo.ExpiresAt, o.ExpiresAt)
@@ -1208,7 +1237,9 @@ func TestOrder_Finalize(t *testing.T) {
 	for name, run := range tests {
 		t.Run(name, func(t *testing.T) {
 			tc := run(t)
-			if err := tc.o.Finalize(context.Background(), tc.db, tc.csr, tc.ca, tc.prov); err != nil {
+			ch, err := tc.o.Finalize(context.Background(), tc.db, tc.csr, tc.ca, tc.prov)
+
+			if err != nil {
 				if assert.NotNil(t, tc.err) {
 					var k *Error
 					if errors.As(err, &k) {
@@ -1222,7 +1253,23 @@ func TestOrder_Finalize(t *testing.T) {
 					}
 				}
 			} else {
-				assert.Nil(t, tc.err)
+				select {
+				case e := <-ch:
+					if assert.NotNil(t, tc.err) {
+						switch k := e.(type) {
+						case *Error:
+							assert.Equals(t, k.Type, tc.err.Type)
+							assert.Equals(t, k.Detail, tc.err.Detail)
+							assert.Equals(t, k.Status, tc.err.Status)
+							assert.Equals(t, k.Err.Error(), tc.err.Err.Error())
+							assert.Equals(t, k.Detail, tc.err.Detail)
+						default:
+							assert.FatalError(t, errors.New("unexpected error type"))
+						}
+					}
+				case <-time.After(1 * time.Second):
+					assert.Nil(t, tc.err)
+				}
 			}
 		})
 	}
