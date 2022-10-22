@@ -61,6 +61,7 @@ func New(name string, raw json.RawMessage) (*Logger, error) {
 	}
 	if formatter != nil {
 		logger.Formatter = formatter
+		logrus.SetFormatter(formatter)
 	}
 	return logger, nil
 }
