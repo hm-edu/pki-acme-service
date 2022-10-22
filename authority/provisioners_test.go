@@ -149,8 +149,8 @@ func TestAuthority_LoadProvisionerByCertificate(t *testing.T) {
 		opts, err := a.Authorize(ctx, token)
 		require.NoError(t, err)
 		opts = append(opts, extraOpts...)
-		certs, err := a.Sign(csr, provisioner.SignOptions{}, opts...)
-		require.NoError(t, err)
+		certs, err := a.Sign(context.TODO(), csr, provisioner.SignOptions{}, opts...)
+		assert.FatalError(t, err)
 		return certs[0]
 	}
 	getProvisioner := func(a *Authority, name string) provisioner.Interface {

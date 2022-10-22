@@ -532,7 +532,7 @@ func TestCloudCAS_CreateCertificate(t *testing.T) {
 				client:               tt.fields.client,
 				certificateAuthority: tt.fields.certificateAuthority,
 			}
-			got, err := c.CreateCertificate(tt.args.req)
+			got, err := c.CreateCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CloudCAS.CreateCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -648,7 +648,7 @@ func TestCloudCAS_RenewCertificate(t *testing.T) {
 				client:               tt.fields.client,
 				certificateAuthority: tt.fields.certificateAuthority,
 			}
-			got, err := c.RenewCertificate(tt.args.req)
+			got, err := c.RenewCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CloudCAS.RenewCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -727,7 +727,7 @@ func TestCloudCAS_RevokeCertificate(t *testing.T) {
 				client:               tt.fields.client,
 				certificateAuthority: tt.fields.certificateAuthority,
 			}
-			got, err := c.RevokeCertificate(tt.args.req)
+			got, err := c.RevokeCertificate(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CloudCAS.RevokeCertificate() error = %v, wantErr %v", err, tt.wantErr)
 				return
