@@ -1,6 +1,7 @@
 package authority
 
 import (
+	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/sha256"
@@ -414,7 +415,7 @@ func TestNewEmbedded_Sign(t *testing.T) {
 	csr, err := x509.ParseCertificateRequest(cr)
 	assert.FatalError(t, err)
 
-	cert, err := a.Sign(csr, provisioner.SignOptions{})
+	cert, err := a.Sign(context.TODO(), csr, provisioner.SignOptions{})
 	assert.FatalError(t, err)
 	assert.Equals(t, []string{"foo.bar.zar"}, cert[0].DNSNames)
 	assert.Equals(t, crt, cert[1])
@@ -431,9 +432,9 @@ func TestNewEmbedded_GetTLSCertificate(t *testing.T) {
 
 	a, err := NewEmbedded(WithX509RootBundle(caPEM), WithX509Signer(crt, key.(crypto.Signer)))
 	assert.FatalError(t, err)
-
+	name, _ := os.MkdirTemp("", "")
 	// GetTLSCertificate
-	cert, err := a.GetTLSCertificate()
+	cert, err := a.GetTLSCertificate(name, false)
 	assert.FatalError(t, err)
 	assert.Equals(t, []string{"localhost"}, cert.Leaf.DNSNames)
 	assert.True(t, cert.Leaf.IPAddresses[0].Equal(net.ParseIP("127.0.0.1")))
