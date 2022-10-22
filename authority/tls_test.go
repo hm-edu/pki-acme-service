@@ -1143,9 +1143,9 @@ func TestAuthority_Renew(t *testing.T) {
 
 			var certChain []*x509.Certificate
 			if tc.auth != nil {
-				certChain, err = tc.auth.Renew(tc.cert)
+				certChain, err = tc.auth.Renew(context.Background(), tc.cert)
 			} else {
-				certChain, err = a.Renew(tc.cert)
+				certChain, err = a.Renew(context.Background(), tc.cert)
 			}
 			if err != nil {
 				if assert.NotNil(t, tc.err, fmt.Sprintf("unexpected error: %s", err)) {
@@ -1347,9 +1347,9 @@ func TestAuthority_Rekey(t *testing.T) {
 
 			var certChain []*x509.Certificate
 			if tc.auth != nil {
-				certChain, err = tc.auth.Rekey(tc.cert, tc.pk)
+				certChain, err = tc.auth.Rekey(context.Background(), tc.cert, tc.pk)
 			} else {
-				certChain, err = a.Rekey(tc.cert, tc.pk)
+				certChain, err = a.Rekey(context.Background(), tc.cert, tc.pk)
 			}
 			if err != nil {
 				if assert.NotNil(t, tc.err, fmt.Sprintf("unexpected error: %s", err)) {
@@ -1880,7 +1880,7 @@ func TestAuthority_constraints(t *testing.T) {
 				t.Errorf("Authority.SignWithContext() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			_, err = auth.Renew(cert)
+			_, err = auth.Renew(context.Background(), cert)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Authority.Renew() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -2033,13 +2033,13 @@ func TestAuthority_CRL(t *testing.T) {
 
 type notImplementedCAS struct{}
 
-func (notImplementedCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
+func (notImplementedCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
 	return nil, apiv1.NotImplementedError{}
 }
-func (notImplementedCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
+func (notImplementedCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
 	return nil, apiv1.NotImplementedError{}
 }
-func (notImplementedCAS) RevokeCertificate(req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+func (notImplementedCAS) RevokeCertificate(ctx context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
 	return nil, apiv1.NotImplementedError{}
 }
 

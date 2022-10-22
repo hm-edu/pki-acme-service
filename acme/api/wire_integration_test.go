@@ -233,7 +233,7 @@ func TestWireIntegration(t *testing.T) {
 
 		return
 	}(ctx)
-	ctx = context.WithValue(ctx, accContextKey, acc)
+	ctx = context.WithValue(ctx, AccContextKey, acc)
 	t.Log("account ID:", acc.ID)
 
 	// new order
