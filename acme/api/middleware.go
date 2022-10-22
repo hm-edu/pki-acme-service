@@ -258,7 +258,7 @@ func extractJWK(next nextHTTP) nextHTTP {
 				render.Error(w, acme.NewError(acme.ErrorUnauthorizedType, "account is not active"))
 				return
 			}
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 		}
 		next(w, r.WithContext(ctx))
 	}
@@ -359,7 +359,7 @@ func lookupJWK(next nextHTTP) nextHTTP {
 					return
 				}
 			}
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, jwkContextKey, acc.Key)
 			next(w, r.WithContext(ctx))
 			return
@@ -566,7 +566,7 @@ type ContextKey string
 
 const (
 	// accContextKey account key
-	accContextKey = ContextKey("acc")
+	AccContextKey = ContextKey("acc")
 	// jwsContextKey jws key
 	jwsContextKey = ContextKey("jws")
 	// jwkContextKey jwk key
@@ -578,7 +578,7 @@ const (
 // accountFromContext searches the context for an ACME account. Returns the
 // account or an error.
 func accountFromContext(ctx context.Context) (*acme.Account, error) {
-	val, ok := ctx.Value(accContextKey).(*acme.Account)
+	val, ok := ctx.Value(AccContextKey).(*acme.Account)
 	if !ok || val == nil {
 		return nil, acme.NewError(acme.ErrorAccountDoesNotExistType, "account not in context")
 	}
