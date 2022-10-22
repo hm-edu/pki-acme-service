@@ -108,7 +108,7 @@ func renewIdentityCertificate(r *http.Request, notBefore, notAfter time.Time) ([
 		cert.NotAfter = notAfter
 	}
 
-	certChain, err := mustAuthority(r.Context()).Renew(cert)
+	certChain, err := mustAuthority(r.Context()).Renew(r.Context(), cert)
 	if err != nil {
 		return nil, err
 	}

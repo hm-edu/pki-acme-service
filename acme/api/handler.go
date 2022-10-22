@@ -5,16 +5,23 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/go-chi/chi"
+
+	pb "github.com/hm-edu/portal-apis"
+	"github.com/smallstep/certificates/cas/sectigocas/eab"
 
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/api/render"
 	"github.com/smallstep/certificates/authority"
+	"github.com/smallstep/certificates/authority/config"
 	"github.com/smallstep/certificates/authority/provisioner"
 )
 
@@ -68,6 +75,7 @@ type HandlerOptions struct {
 	// PrerequisitesChecker checks if all prerequisites for serving ACME are
 	// met by the CA configuration.
 	PrerequisitesChecker func(ctx context.Context) (bool, error)
+	Cfg                  *config.Config
 }
 
 var mustAuthority = func(ctx context.Context) acme.CertificateAuthority {
@@ -102,7 +110,6 @@ func (h *handler) Route(r api.Router) {
 }
 
 // NewHandler returns a new ACME API handler.
-//
 // Note: this method is deprecated in step-ca, other applications can still use
 // this to support ACME, but the recommendation is to use use
 // api.Route(api.Router) and acme.NewContext() instead.
@@ -396,4 +403,24 @@ func GetCertificate(w http.ResponseWriter, r *http.Request) {
 	api.LogCertificate(w, cert.Leaf)
 	w.Header().Set("Content-Type", "application/pem-certificate-chain")
 	w.Write(certBytes)
+}
+
+func checkPermission(ctx context.Context, identifiers []acme.Identifier, eak *acme.ExternalAccountKey) ([]string, error) {
+	if eak == nil {
+		logrus.Warn("No external account key given. Cannot check permissions")
+		return nil, nil
+	}
+	var domains []string
+	for _, x := range identifiers {
+		domains = append(domains, x.Value)
+	}
+	client, ok := eab.FromContext(ctx)
+	if !ok {
+		return nil, errors.New("no external account client available")
+	}
+	result, err := client.CheckEABPermissions(ctx, &pb.CheckEABPermissionRequest{Domains: domains, EabKey: eak.ID})
+	if err != nil {
+		return nil, err
+	}
+	return result.Missing, nil
 }
