@@ -16,6 +16,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/smallstep/certificates/cas/sectigocas/eab"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 
@@ -382,7 +384,7 @@ func TestHandler_GetOrder(t *testing.T) {
 		},
 		"fail/nil-account": func(t *testing.T) test {
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, nil)
+			ctx = context.WithValue(ctx, AccContextKey, nil)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -392,7 +394,7 @@ func TestHandler_GetOrder(t *testing.T) {
 		},
 		"fail/no-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -403,7 +405,7 @@ func TestHandler_GetOrder(t *testing.T) {
 		"fail/nil-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), nil)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -414,7 +416,7 @@ func TestHandler_GetOrder(t *testing.T) {
 		"fail/db.GetOrder-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -428,7 +430,7 @@ func TestHandler_GetOrder(t *testing.T) {
 		"fail/account-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -444,7 +446,7 @@ func TestHandler_GetOrder(t *testing.T) {
 		"fail/provisioner-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -460,7 +462,7 @@ func TestHandler_GetOrder(t *testing.T) {
 		"fail/order-update-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -484,7 +486,7 @@ func TestHandler_GetOrder(t *testing.T) {
 		"ok": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
 				db: &acme.MockDB{
@@ -1074,6 +1076,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 		ctx        context.Context
 		nor        *NewOrderRequest
 		statusCode int
+		missing    []string
 		vr         func(t *testing.T, o *acme.Order)
 		err        *acme.Error
 	}
@@ -1088,7 +1091,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 		},
 		"fail/nil-account": func(t *testing.T) test {
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, nil)
+			ctx = context.WithValue(ctx, AccContextKey, nil)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -1098,7 +1101,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 		},
 		"fail/no-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -1109,7 +1112,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 		"fail/nil-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -1119,7 +1122,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 		},
 		"fail/no-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			ctx = acme.NewProvisionerContext(ctx, prov)
 			return test{
 				db:         &acme.MockDB{},
@@ -1131,7 +1134,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 		"fail/nil-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, nil)
 			return test{
 				db:         &acme.MockDB{},
@@ -1143,7 +1146,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 		"fail/unmarshal-payload-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{})
 			return test{
 				db:         &acme.MockDB{},
@@ -1158,7 +1161,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				db:         &acme.MockDB{},
@@ -1177,7 +1180,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), &acme.MockProvisioner{})
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -1205,7 +1208,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), acmeProv)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -1233,7 +1236,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), acmeProv)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -1269,7 +1272,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), acmeProv)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -1312,7 +1315,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), provWithPolicy)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -1355,7 +1358,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), provWithPolicy)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -1393,7 +1396,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
@@ -1427,7 +1430,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2, ch3 **acme.Challenge
@@ -1492,6 +1495,36 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 				err: acme.NewErrorISE("error creating order: force"),
 			}
 		},
+		"fail/missingDomain": func(t *testing.T) test {
+			acc := &acme.Account{ID: "accID"}
+			nor := &NewOrderRequest{
+				Identifiers: []acme.Identifier{
+					{Type: "dns", Value: "zap.internal"},
+					{Type: "dns", Value: "*.zar.internal"},
+				},
+			}
+			b, err := json.Marshal(nor)
+			assert.FatalError(t, err)
+			p := newACMEProv(t)
+			p.RequireEAB = true
+			ctx := acme.NewProvisionerContext(context.Background(), p)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
+			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
+			return test{
+				ctx:        ctx,
+				statusCode: 400,
+				ca:         &mockCA{},
+				missing:    []string{"zap.internal"},
+				db: &acme.MockDB{MockGetExternalAccountKeyByAccountID: func(ctx context.Context, provisionerID, accountID string) (*acme.ExternalAccountKey, error) {
+					assert.Equals(t, prov.GetID(), provisionerID)
+					assert.Equals(t, "accID", accountID)
+					return &acme.ExternalAccountKey{
+						ID: "test",
+					}, nil
+				}},
+				err: acme.NewError(acme.ErrorRejectedIdentifierType, "account does not exist"),
+			}
+		},
 		"ok/multiple-authz": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			nor := &NewOrderRequest{
@@ -1503,7 +1536,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2, ch3, ch4 **acme.Challenge
@@ -1623,7 +1656,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2, ch3 **acme.Challenge
@@ -1720,7 +1753,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2, ch3 **acme.Challenge
@@ -1816,7 +1849,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2, ch3 **acme.Challenge
@@ -2036,7 +2069,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), acmeWireProv)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2         **acme.Challenge
@@ -2149,7 +2182,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2, ch3 **acme.Challenge
@@ -2249,7 +2282,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), provWithPolicy)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2, ch3 **acme.Challenge
@@ -2339,6 +2372,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 		t.Run(name, func(t *testing.T) {
 			mockMustAuthority(t, tc.ca)
 			ctx := newBaseContext(tc.ctx, tc.db, acme.NewLinker("test.ca.smallstep.com", "acme"))
+			ctx = eab.NewContext(ctx, &MockClient{Missing: tc.missing})
 			req := httptest.NewRequest("GET", u, http.NoBody)
 			req = req.WithContext(ctx)
 			w := httptest.NewRecorder()
@@ -2441,7 +2475,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/nil-account": func(t *testing.T) test {
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, nil)
+			ctx = context.WithValue(ctx, AccContextKey, nil)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -2451,7 +2485,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/no-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -2462,7 +2496,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		"fail/nil-provisioner": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			return test{
 				db:         &acme.MockDB{},
 				ctx:        ctx,
@@ -2472,7 +2506,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		},
 		"fail/no-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
-			ctx := context.WithValue(context.Background(), accContextKey, acc)
+			ctx := context.WithValue(context.Background(), AccContextKey, acc)
 			ctx = acme.NewProvisionerContext(ctx, prov)
 			return test{
 				db:         &acme.MockDB{},
@@ -2484,7 +2518,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		"fail/nil-payload": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, nil)
 			return test{
 				db:         &acme.MockDB{},
@@ -2496,7 +2530,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		"fail/unmarshal-payload-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{})
 			return test{
 				db:         &acme.MockDB{},
@@ -2511,7 +2545,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 			b, err := json.Marshal(fr)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				db:         &acme.MockDB{},
@@ -2524,7 +2558,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -2539,7 +2573,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		"fail/account-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -2556,7 +2590,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		"fail/provisioner-id-mismatch": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -2573,7 +2607,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		"fail/order-finalize-error": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{
@@ -2598,7 +2632,7 @@ func TestHandler_FinalizeOrder(t *testing.T) {
 		"ok": func(t *testing.T) test {
 			acc := &acme.Account{ID: "accountID"}
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: payloadBytes})
 			ctx = context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 			return test{

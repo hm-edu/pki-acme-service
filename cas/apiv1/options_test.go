@@ -12,15 +12,15 @@ type testCAS struct {
 	name string
 }
 
-func (t *testCAS) CreateCertificate(*CreateCertificateRequest) (*CreateCertificateResponse, error) {
+func (t *testCAS) CreateCertificate(_ context.Context, req *CreateCertificateRequest) (*CreateCertificateResponse, error) {
 	return nil, nil
 }
 
-func (t *testCAS) RenewCertificate(*RenewCertificateRequest) (*RenewCertificateResponse, error) {
+func (t *testCAS) RenewCertificate(_ context.Context, req *RenewCertificateRequest) (*RenewCertificateResponse, error) {
 	return nil, nil
 }
 
-func (t *testCAS) RevokeCertificate(*RevokeCertificateRequest) (*RevokeCertificateResponse, error) {
+func (t *testCAS) RevokeCertificate(_ context.Context, req *RevokeCertificateRequest) (*RevokeCertificateResponse, error) {
 	return nil, nil
 }
 
