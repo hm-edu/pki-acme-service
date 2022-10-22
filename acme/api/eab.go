@@ -51,7 +51,7 @@ func validateExternalAccountBinding(ctx context.Context, nar *NewAccountRequest)
 	}
 
 	db := acme.MustDatabaseFromContext(ctx)
-	externalAccountKey, err := db.GetExternalAccountKey(ctx, acmeProv.ID, keyID)
+	externalAccountKey, err := db.GetExternalAccountKey(ctx, acmeProv.GetID(), keyID)
 	if err != nil {
 		if _, ok := errors.AsType[*acme.Error](err); ok {
 			return nil, acme.WrapError(acme.ErrorUnauthorizedType, err, "the field 'kid' references an unknown key")
