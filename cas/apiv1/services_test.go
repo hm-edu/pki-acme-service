@@ -1,18 +1,19 @@
 package apiv1
 
 import (
+	"context"
 	"testing"
 )
 
 type simpleCAS struct{}
 
-func (*simpleCAS) CreateCertificate(req *CreateCertificateRequest) (*CreateCertificateResponse, error) {
+func (*simpleCAS) CreateCertificate(ctx context.Context, req *CreateCertificateRequest) (*CreateCertificateResponse, error) {
 	return nil, NotImplementedError{}
 }
-func (*simpleCAS) RenewCertificate(req *RenewCertificateRequest) (*RenewCertificateResponse, error) {
+func (*simpleCAS) RenewCertificate(ctx context.Context, req *RenewCertificateRequest) (*RenewCertificateResponse, error) {
 	return nil, NotImplementedError{}
 }
-func (*simpleCAS) RevokeCertificate(req *RevokeCertificateRequest) (*RevokeCertificateResponse, error) {
+func (*simpleCAS) RevokeCertificate(ctx context.Context, req *RevokeCertificateRequest) (*RevokeCertificateResponse, error) {
 	return nil, NotImplementedError{}
 }
 
