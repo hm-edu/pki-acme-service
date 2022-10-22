@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/x509util"
@@ -67,6 +68,8 @@ func (o *Order) UpdateStatus(ctx context.Context, db DB) error {
 	now := clock.Now()
 
 	switch o.Status {
+	case StatusProcessing:
+		return nil
 	case StatusInvalid:
 		return nil
 	case StatusValid:
@@ -150,27 +153,29 @@ func (o *Order) getAuthorizationFingerprint(ctx context.Context, db DB) (string,
 
 // Finalize signs a certificate if the necessary conditions for Order completion
 // have been met.
-//
-// TODO(mariano): Here or in the challenge validation we should perform some
-// external validation using the identifier value and the attestation data. From
-// a validation service we can get the list of SANs to set in the final
-// certificate.
-func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateRequest, auth CertificateAuthority, p Provisioner) error {
+func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateRequest, auth CertificateAuthority, p Provisioner) (chan error, error) {
 	if err := o.UpdateStatus(ctx, db); err != nil {
-		return err
+		return nil, err
 	}
 
 	switch o.Status {
 	case StatusInvalid:
-		return NewError(ErrorOrderNotReadyType, "order %s has been abandoned", o.ID)
+		return nil, NewError(ErrorOrderNotReadyType, "order %s has been abandoned", o.ID)
 	case StatusValid:
-		return nil
+		return nil, nil
 	case StatusPending:
-		return NewError(ErrorOrderNotReadyType, "order %s is not ready", o.ID)
+		return nil, NewError(ErrorOrderNotReadyType, "order %s is not ready", o.ID)
 	case StatusReady:
 		break
+	case StatusProcessing:
+		return nil, NewErrorISE("order %s is already processing", o.ID)
 	default:
-		return NewErrorISE("unexpected status %s for order %s", o.Status, o.ID)
+		return nil, NewErrorISE("unexpected status %s for order %s", o.Status, o.ID)
+	}
+
+	o.Status = StatusProcessing
+	if err := db.UpdateOrder(ctx, o); err != nil {
+		return nil, WrapErrorISE(err, "error updating order %s", o.ID)
 	}
 
 	// Get key fingerprint if any. And then compare it with the CSR fingerprint.
@@ -179,15 +184,15 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 	// and the attestation certificate are the same.
 	fingerprint, err := o.getAuthorizationFingerprint(ctx, db)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if fingerprint != "" {
 		fp, err := keyutil.Fingerprint(csr.PublicKey)
 		if err != nil {
-			return WrapErrorISE(err, "error calculating key fingerprint")
+			return nil, WrapErrorISE(err, "error calculating key fingerprint")
 		}
 		if subtle.ConstantTimeCompare([]byte(fingerprint), []byte(fp)) == 0 {
-			return NewError(ErrorUnauthorizedType, "order %s csr does not match the attested key", o.ID)
+			return nil, NewError(ErrorUnauthorizedType, "order %s csr does not match the attested key", o.ID)
 		}
 	}
 
@@ -212,7 +217,7 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 			// could result in unauthorized access if a relying system relies on the Common
 			// Name in its authorization logic.
 			if csr.Subject.CommonName != "" && csr.Subject.CommonName != permanentIdentifier {
-				return NewError(ErrorBadCSRType, "CSR Subject Common Name does not match identifiers exactly: "+
+				return nil, NewError(ErrorBadCSRType, "CSR Subject Common Name does not match identifiers exactly: "+
 					"CSR Subject Common Name = %s, Order Permanent Identifier = %s", csr.Subject.CommonName, permanentIdentifier)
 			}
 			break
@@ -233,7 +238,7 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 		defaultTemplate = x509util.DefaultLeafTemplate
 		sans, err := o.sans(csr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		data.SetSubjectAlternativeNames(sans...)
 	}
@@ -242,7 +247,7 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 	ctx = provisioner.NewContextWithMethod(ctx, provisioner.SignMethod)
 	signOps, err := p.AuthorizeSign(ctx, "")
 	if err != nil {
-		return WrapErrorISE(err, "error retrieving authorization options from ACME provisioner")
+		return nil, WrapErrorISE(err, "error retrieving authorization options from ACME provisioner")
 	}
 	// Unlike most of the provisioners, ACME's AuthorizeSign method doesn't
 	// define the templates, and the template data used in WebHooks is not
@@ -255,38 +260,53 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 
 	templateOptions, err := provisioner.CustomTemplateOptions(p.GetOptions(), data, defaultTemplate)
 	if err != nil {
-		return WrapErrorISE(err, "error creating template options from ACME provisioner")
+		return nil, WrapErrorISE(err, "error creating template options from ACME provisioner")
 	}
 
 	// Build extra signing options.
 	signOps = append(signOps, templateOptions)
 	signOps = append(signOps, extraOptions...)
+	ch := make(chan error)
+	go func() {
+		// Sign a new certificate.
+		certChain, err := auth.Sign(ctx, csr, provisioner.SignOptions{
+			NotBefore: provisioner.NewTimeDuration(o.NotBefore),
+			NotAfter:  provisioner.NewTimeDuration(o.NotAfter),
+		}, signOps...)
+		if err != nil {
+			logrus.WithError(err).Error("error signing certificate")
+			o.Status = StatusInvalid
+			ch <- WrapErrorISE(err, "error signing certificate for order %s", o.ID)
+			if err = db.UpdateOrder(ctx, o); err != nil {
+				logrus.WithError(err).Error("error updating order")
+			}
+			return
+		}
 
-	// Sign a new certificate.
-	certChain, err := auth.Sign(csr, provisioner.SignOptions{
-		NotBefore: provisioner.NewTimeDuration(o.NotBefore),
-		NotAfter:  provisioner.NewTimeDuration(o.NotAfter),
-	}, signOps...)
-	if err != nil {
-		return WrapErrorISE(err, "error signing certificate for order %s", o.ID)
-	}
+		cert := &Certificate{
+			AccountID:     o.AccountID,
+			OrderID:       o.ID,
+			Leaf:          certChain[0],
+			Intermediates: certChain[1:],
+		}
+		if err := db.CreateCertificate(ctx, cert); err != nil {
+			logrus.WithError(err).Error("error creating certificate")
+			o.Status = StatusInvalid
+			ch <- WrapErrorISE(err, "error creating certificate for order %s", o.ID)
+			if err = db.UpdateOrder(ctx, o); err != nil {
+				logrus.WithError(err).Error("error updating order")
+			}
+			return
+		}
 
-	cert := &Certificate{
-		AccountID:     o.AccountID,
-		OrderID:       o.ID,
-		Leaf:          certChain[0],
-		Intermediates: certChain[1:],
-	}
-	if err := db.CreateCertificate(ctx, cert); err != nil {
-		return WrapErrorISE(err, "error creating certificate for order %s", o.ID)
-	}
-
-	o.CertificateID = cert.ID
-	o.Status = StatusValid
-	if err = db.UpdateOrder(ctx, o); err != nil {
-		return WrapErrorISE(err, "error updating order %s", o.ID)
-	}
-	return nil
+		o.CertificateID = cert.ID
+		o.Status = StatusValid
+		if err = db.UpdateOrder(ctx, o); err != nil {
+			logrus.WithError(err).Error("error updating order")
+			ch <- WrapErrorISE(err, "error updating order %s", o.ID)
+		}
+	}()
+	return ch, nil
 }
 
 func (o *Order) sans(csr *x509.CertificateRequest) ([]x509util.SubjectAlternativeName, error) {
