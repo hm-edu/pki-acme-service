@@ -49,8 +49,8 @@ require (
 	golang.org/x/net v0.0.0-20221012135044-0b7e1fb9d458
 	golang.org/x/sys v0.0.0-20221006211917-84dc82d7e875 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
-	google.golang.org/api v0.99.0
-	google.golang.org/genproto v0.0.0-20221010155953-15ba04fc1c0e
+	google.golang.org/api v0.101.0
+	google.golang.org/genproto v0.0.0-20221018160656-63c7b68cfc55
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/square/go-jose.v2 v2.6.0
@@ -151,7 +151,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20221006150949-b44042a4b9c1 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
