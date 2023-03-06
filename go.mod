@@ -62,7 +62,7 @@ require (
 	cloud.google.com/go/iam v0.11.0 // indirect
 	cloud.google.com/go/kms v1.8.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.39.0
-	go.opentelemetry.io/contrib/propagators/b3 v1.14.0
+	go.opentelemetry.io/contrib/propagators/b3 v1.15.0
 	go.opentelemetry.io/otel v1.14.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.13.0
 	go.opentelemetry.io/otel/sdk v1.14.0
