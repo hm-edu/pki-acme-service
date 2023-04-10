@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/security v1.13.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
-	github.com/aws/aws-sdk-go v1.44.225 // indirect
+	github.com/aws/aws-sdk-go v1.44.235 // indirect
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.4.0
@@ -24,7 +24,6 @@ require (
 	github.com/hashicorp/vault/api/auth/approle v0.4.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.4.0
 	github.com/hm-edu/portal-apis v0.0.0-20220603062428-bf1306b32398
-	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/micromdm/scep/v2 v2.1.0
@@ -39,7 +38,7 @@ require (
 	github.com/urfave/cli v1.22.12
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.5
-	go.step.sm/crypto v0.28.0
+	go.step.sm/crypto v0.29.0
 	go.step.sm/linkedca v0.19.0
 	golang.org/x/crypto v0.7.0
 	golang.org/x/net v0.8.0
@@ -140,8 +139,10 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.9.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	go.opentelemetry.io/otel/metric v0.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 )
