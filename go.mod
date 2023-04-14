@@ -149,4 +149,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.20221021074654-ff0ebfc36cd6
+replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.20230305071512-139857866201
