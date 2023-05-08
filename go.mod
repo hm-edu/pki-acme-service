@@ -43,7 +43,7 @@ require (
 	golang.org/x/net v0.9.0
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
-	google.golang.org/api v0.119.0
+	google.golang.org/api v0.121.0
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
@@ -149,7 +149,7 @@ require (
 require (
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/google/s2a-go v0.1.2 // indirect
+	github.com/google/s2a-go v0.1.3 // indirect
 	go.opentelemetry.io/otel/metric v0.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.15.1 // indirect
 )
