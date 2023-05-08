@@ -57,7 +57,7 @@ require (
 	cloud.google.com/go/kms v1.10.2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0
 	go.opentelemetry.io/contrib/propagators/b3 v1.15.0
-	go.opentelemetry.io/otel v1.15.0
+	go.opentelemetry.io/otel v1.15.1
 	go.opentelemetry.io/otel/exporters/jaeger v1.15.0
 	go.opentelemetry.io/otel/sdk v1.15.0
 )
@@ -150,7 +150,7 @@ require (
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	go.opentelemetry.io/otel/metric v0.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.15.0 // indirect
+	go.opentelemetry.io/otel/trace v1.15.1 // indirect
 )
 
 replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.20230305071512-139857866201
