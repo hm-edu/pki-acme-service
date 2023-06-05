@@ -19,7 +19,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.10.0
 	github.com/hashicorp/vault/api v1.9.2
 	github.com/hashicorp/vault/api/auth/approle v0.4.1
-	github.com/hashicorp/vault/api/auth/kubernetes v0.4.0
+	github.com/hashicorp/vault/api/auth/kubernetes v0.4.1
 	github.com/hm-edu/portal-apis v0.0.0-20220603062428-bf1306b32398
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
