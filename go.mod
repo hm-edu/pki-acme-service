@@ -38,10 +38,10 @@ require (
 	go.step.sm/cli-utils v0.7.6
 	go.step.sm/crypto v0.31.2
 	go.step.sm/linkedca v0.19.1
-	golang.org/x/crypto v0.9.0
+	golang.org/x/crypto v0.10.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
-	golang.org/x/net v0.10.0
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/net v0.11.0
+	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	google.golang.org/api v0.126.0
 	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc // indirect
@@ -141,7 +141,7 @@ require (
 	go.etcd.io/bbolt v1.3.7 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
