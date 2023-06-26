@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	cloud.google.com/go v0.110.2 // indirect
-	cloud.google.com/go/longrunning v0.5.0
+	cloud.google.com/go/longrunning v0.5.1
 	cloud.google.com/go/security v1.15.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
