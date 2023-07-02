@@ -185,6 +185,11 @@ func NewEmbedded(opts ...Option) (*Authority, error) {
 	return a, nil
 }
 
+// Health checks if the authority is stil alive.
+func (a *Authority) Health() error {
+	return a.db.Ping()
+}
+
 type authorityKey struct{}
 
 // NewContext adds the given authority to the context.
