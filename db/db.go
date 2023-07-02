@@ -60,6 +60,7 @@ type AuthDB interface {
 	IsSSHHost(name string) (bool, error)
 	GetSSHHostPrincipals() ([]string, error)
 	Shutdown() error
+	Ping() error
 }
 
 type dbKey struct{}
@@ -525,6 +526,11 @@ func (m *MockAuthDB) StoreCRL(info *CertificateRevocationListInfo) error {
 	return m.Err
 }
 
+// Ping mock
+func (m *MockAuthDB) Ping() error {
+	return nil
+}
+
 // IsRevoked mock.
 func (m *MockAuthDB) IsRevoked(sn string) (bool, error) {
 	if m.MIsRevoked != nil {
@@ -641,6 +647,11 @@ type MockNoSQLDB struct {
 	MList        func(bucket []byte) ([]*database.Entry, error)
 	MUpdate      func(tx *database.Tx) error
 	MCmpAndSwap  func(bucket, key, old, newval []byte) ([]byte, bool, error)
+}
+
+// Ping mock
+func (m *MockNoSQLDB) Ping() error {
+	return nil
 }
 
 // CmpAndSwap mock
