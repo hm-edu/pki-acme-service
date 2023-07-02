@@ -144,5 +144,12 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
+replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.20221021074654-ff0ebfc36cd6
+
+// replace go.step.sm/crypto => ../crypto
+
+// replace go.step.sm/cli-utils => ../cli-utils
+// replace go.step.sm/linkedca => ../linkedca
+
 // use github.com/smallstep/pkcs7 fork with patches applied
 replace go.mozilla.org/pkcs7 => github.com/smallstep/pkcs7 v0.0.0-20230615175518-7ce6486b74eb
