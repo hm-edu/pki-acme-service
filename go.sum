@@ -302,6 +302,8 @@ github.com/hashicorp/vault/api/auth/approle v0.5.0 h1:a1TK6VGwYqSAfkmX4y4dJ4WBxM
 github.com/hashicorp/vault/api/auth/approle v0.5.0/go.mod h1:CHOQIA1AZACfjTzHggmyfiOZ+xCSKNRFqe48FTCzH0k=
 github.com/hashicorp/vault/api/auth/kubernetes v0.5.0 h1:CXO0fD7M3iCGovP/UApeHhPcH4paDFKcu7AjEXi94rI=
 github.com/hashicorp/vault/api/auth/kubernetes v0.5.0/go.mod h1:afrElBIO9Q4sHFVuVWgNevG4uAs1bT2AZFA9aEiI608=
+github.com/hm-edu/nosql v0.4.1-0.20221021074654-ff0ebfc36cd6 h1:y2/TSGSQOdd1kK4NvTGeUmamcVbbWG/sLCTAKfpLeDM=
+github.com/hm-edu/nosql v0.4.1-0.20221021074654-ff0ebfc36cd6/go.mod h1:6XhRTHHp0/maggMch4SF3vokbFzSnvp2VxBWNSyGN8A=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/huandu/xstrings v1.3.3 h1:/Gcsuc1x8JVbJ9/rlye4xZnVAbEkGauT8lbebqcQws4=
 github.com/huandu/xstrings v1.3.3/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
@@ -544,8 +546,6 @@ github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262 h1:unQFBIznI+VYD1
 github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262/go.mod h1:MyOHs9Po2fbM1LHej6sBUT8ozbxmMOFG+E+rx/GSGuc=
 github.com/smallstep/go-attestation v0.4.4-0.20230627102604-cf579e53cbd2 h1:UIAS8DTWkeclraEGH2aiJPyNPu16VbT41w4JoBlyFfU=
 github.com/smallstep/go-attestation v0.4.4-0.20230627102604-cf579e53cbd2/go.mod h1:vNAduivU014fubg6ewygkAvQC0IQVXqdc8vaGl/0er4=
-github.com/smallstep/nosql v0.6.0 h1:ur7ysI8s9st0cMXnTvB8tA3+x5Eifmkb6hl4uqNV5jc=
-github.com/smallstep/nosql v0.6.0/go.mod h1:jOXwLtockXORUPPZ2MCUcIkGR6w0cN1QGZniY9DITQA=
 github.com/smallstep/pkcs7 v0.0.0-20230302202335-4c094085c948 h1:/80FqDt6pzL9clNW8G2IsRAzKGNAuzsEs7g1Y5oaM/Y=
 github.com/smallstep/pkcs7 v0.0.0-20230302202335-4c094085c948/go.mod h1:SNgMg+EgDFwmvSmLRTNKC5fegJjB7v23qTQ0XLGUNHk=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
