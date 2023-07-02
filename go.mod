@@ -166,3 +166,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.20221021074654-ff0ebfc36cd6
