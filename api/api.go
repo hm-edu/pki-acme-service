@@ -54,6 +54,7 @@ type Authority interface {
 	GetFederation() ([]*x509.Certificate, error)
 	Version() authority.Version
 	GetCertificateRevocationList() ([]byte, error)
+	Health() error
 }
 
 // mustAuthority will be replaced on unit tests.
@@ -338,8 +339,14 @@ func Version(w http.ResponseWriter, r *http.Request) {
 }
 
 // Health is an HTTP handler that returns the status of the server.
-func Health(w http.ResponseWriter, _ *http.Request) {
-	render.JSON(w, HealthResponse{Status: "ok"})
+func Health(w http.ResponseWriter, r *http.Request) {
+	a := mustAuthority(r.Context())
+	err := a.Health()
+	if err == nil {
+		render.JSON(w, HealthResponse{Status: "ok"})
+	} else {
+		render.JSONStatus(w, HealthResponse{Status: "error"}, http.StatusServiceUnavailable)
+	}
 }
 
 // Root is an HTTP handler that using the SHA256 from the URL, returns the root
