@@ -62,6 +62,13 @@ var (
 	}
 )
 
+type MqttConfig struct {
+	Host         string `json:"host"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Organization string `json:"organization"`
+}
+
 // Config represents the CA configuration and it's mapped to a JSON object.
 type Config struct {
 	Root             multiString          `json:"root"`
@@ -86,6 +93,7 @@ type Config struct {
 	SkipValidation   bool                 `json:"-"`
 	Storage          string               `json:"storage,omitempty"`
 	ManagementHost   string               `json:"managementHost"`
+	ValidationBroker *MqttConfig          `json:"validationBroker,omitempty"`
 
 	// Keeps record of the filename the Config is read from
 	loadedFromFilepath string
