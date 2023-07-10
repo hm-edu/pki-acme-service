@@ -23,12 +23,16 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/pkg/errors"
 	"github.com/smallstep/certificates/acme"
 	acmeAPI "github.com/smallstep/certificates/acme/api"
 	acmeNoSQL "github.com/smallstep/certificates/acme/db/nosql"
+	acmeMqtt "github.com/smallstep/certificates/acme/mqtt"
+	"github.com/smallstep/certificates/acme/validation"
 	"github.com/smallstep/certificates/api"
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/authority/admin"
@@ -360,7 +364,20 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error connecting to EAB")
 	}
-	baseContext := buildContext(auth, scepAuthority, acmeDB, acmeLinker, client)
+	var validationBroker validation.MqttClient
+	if cfg.ValidationBroker != nil {
+		if cfg.ValidationBroker.Password == "" {
+			// pick password from env
+			cfg.ValidationBroker.Password = os.Getenv("MQTT_PASSWORD")
+		}
+
+		validationBroker, err = acmeMqtt.Connect(acmeDB, cfg.ValidationBroker.Host, cfg.ValidationBroker.Username, cfg.ValidationBroker.Password, cfg.ValidationBroker.Organization)
+		if err != nil {
+			logrus.Warn("error connecting to validation broker. Only local validation will be available!")
+		}
+	}
+
+	baseContext := buildContext(auth, scepAuthority, acmeDB, acmeLinker, client, validationBroker)
 
 	ca.srv = server.New(cfg.Address, handler, tlsConfig)
 	ca.srv.BaseContext = func(net.Listener) context.Context {
@@ -407,7 +424,7 @@ func (ca *CA) shouldServeInsecureServer() bool {
 }
 
 // buildContext builds the server base context.
-func buildContext(a *authority.Authority, scepAuthority *scep.Authority, acmeDB acme.DB, acmeLinker acme.Linker, eabClient pb.EABServiceClient) context.Context {
+func buildContext(a *authority.Authority, scepAuthority *scep.Authority, acmeDB acme.DB, acmeLinker acme.Linker, eabClient pb.EABServiceClient, validationBroker validation.MqttClient) context.Context {
 	ctx := authority.NewContext(context.Background(), a)
 	if authDB := a.GetDatabase(); authDB != nil {
 		ctx = db.NewContext(ctx, authDB)
@@ -423,6 +440,9 @@ func buildContext(a *authority.Authority, scepAuthority *scep.Authority, acmeDB 
 	}
 	if eabClient != nil {
 		ctx = eab.NewContext(ctx, eabClient)
+	}
+	if validationBroker != nil {
+		ctx = validation.NewContext(ctx, validationBroker)
 	}
 	return ctx
 }
