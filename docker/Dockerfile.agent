@@ -1,0 +1,18 @@
+FROM golang:alpine AS builder
+
+WORKDIR /src
+COPY . .
+
+RUN apk add --no-cache curl git make libcap
+RUN PKG=github.com/smallstep/certificates/cmd/step-agent BINNAME=step-agent make V=1 bin/step-agent
+RUN setcap CAP_NET_BIND_SERVICE=+eip bin/step-agent
+
+FROM smallstep/step-cli:latest
+
+COPY --from=builder /src/bin/step-agent /usr/local/bin/step-agent
+
+USER step
+
+VOLUME ["/home/step"]
+STOPSIGNAL SIGTERM
+CMD exec /usr/local/bin/step-agent 
