@@ -27,6 +27,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/google/go-tpm/tpm2"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
 	"github.com/smallstep/go-attestation/attest"
@@ -35,6 +36,7 @@ import (
 	"go.step.sm/crypto/pemutil"
 	"go.step.sm/crypto/x509util"
 
+	"github.com/smallstep/certificates/acme/validation"
 	"github.com/smallstep/certificates/authority/provisioner"
 )
 
@@ -116,11 +118,38 @@ func http01Validate(ctx context.Context, ch *Challenge, db DB, jwk *jose.JSONWeb
 	if InsecurePortHTTP01 != 0 {
 		u.Host += ":" + strconv.Itoa(InsecurePortHTTP01)
 	}
-
+	go func() {
+		mqtt, ok := validation.FromContext(ctx)
+		if !ok {
+			return
+		}
+		req := validation.ValidationRequest{
+			Authz:     ch.AuthorizationID,
+			Challenge: ch.ID,
+			Target:    u.String(),
+		}
+		data, err := json.Marshal(req)
+		if err != nil {
+			return
+		}
+		if token := mqtt.GetClient().Publish(fmt.Sprintf("%s/jobs", mqtt.GetOrganization()), 1, false, data); token.Wait() && token.Error() != nil {
+			logrus.Warn(token.Error())
+		}
+	}()
 	vc := MustClientFromContext(ctx)
-	resp, err := vc.Get(u.String())
-	if err != nil {
-		return storeError(ctx, db, ch, false, WrapError(ErrorConnectionType, err,
+	resp, errHttp := vc.Get(u.String())
+	// get challenge again and check if it was already validated
+	chDb, errDb := db.GetChallenge(ctx, ch.ID, ch.AuthorizationID)
+	if errDb == nil {
+		logrus.WithField("challenge", chDb.ID).WithField("authz", chDb.AuthorizationID).Infof("challenge has status %s", chDb.Status)
+		if chDb.Status == StatusValid {
+			return nil
+		}
+	} else {
+		logrus.WithError(errDb).WithField("challenge", ch.ID).WithField("authz", ch.AuthorizationID).Warn("error getting challenge from db")
+	}
+	if errHttp != nil {
+		return storeError(ctx, db, ch, false, WrapError(ErrorConnectionType, errHttp,
 			"error doing http GET for url %s", u))
 	}
 	defer resp.Body.Close()
