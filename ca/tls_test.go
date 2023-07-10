@@ -79,7 +79,7 @@ func startCATestServer() *httptest.Server {
 	}
 	// Use a httptest.Server instead
 	srv := startTestServer(ca.srv.TLSConfig, ca.srv.Handler)
-	baseContext := buildContext(ca.auth, nil, nil, nil, nil)
+	baseContext := buildContext(ca.auth, nil, nil, nil, nil, nil)
 	srv.Config.BaseContext = func(net.Listener) context.Context {
 		return baseContext
 	}
