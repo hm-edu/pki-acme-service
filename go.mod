@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/security v1.15.1
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
-	github.com/aws/aws-sdk-go v1.44.281 // indirect
+	github.com/aws/aws-sdk-go v1.44.295 // indirect
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/go-chi/chi v4.1.2+incompatible
@@ -36,7 +36,7 @@ require (
 	github.com/urfave/cli v1.22.14
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.7.6
-	go.step.sm/crypto v0.32.2
+	go.step.sm/crypto v0.32.4
 	go.step.sm/linkedca v0.19.1
 	golang.org/x/crypto v0.11.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
@@ -54,7 +54,7 @@ require (
 	cloud.google.com/go/compute v1.19.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.0 // indirect
-	cloud.google.com/go/kms v1.12.0 // indirect
+	cloud.google.com/go/kms v1.13.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.42.0
 	go.opentelemetry.io/otel v1.16.0
 )
