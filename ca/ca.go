@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -20,7 +21,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -161,7 +164,15 @@ func New(cfg *config.Config, opts ...Option) (*CA, error) {
 
 // Init initializes the CA with the given configuration.
 func (ca *CA) Init(cfg *config.Config) (*CA, error) {
-	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint())
+	var exporter sdktrace.SpanExporter
+	var err error
+	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") == "" {
+		exporter, err = stdout.New(stdout.WithWriter(io.Discard))
+	} else {
+		opts := []otlptracegrpc.Option{otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))}
+		client := otlptracegrpc.NewClient(opts...)
+		exporter, err = otlptrace.New(context.Background(), client)
+	}
 	if err != nil {
 		return nil, err
 	}
