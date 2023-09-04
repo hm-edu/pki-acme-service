@@ -62,7 +62,7 @@ require (
 )
 
 require (
-	go.opentelemetry.io/contrib/propagators/b3 v1.17.0
+	go.opentelemetry.io/contrib/propagators/b3 v1.18.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.0.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.0.1
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.17.0
