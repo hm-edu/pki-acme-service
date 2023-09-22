@@ -234,7 +234,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		allInsecure = true
 	}
 
-	if allInsecure {
+	if !allInsecure {
 		tls, clientTLSConfig, err := ca.getTLSConfig(auth, cfg)
 		tlsConfig = tls
 		if err != nil {
