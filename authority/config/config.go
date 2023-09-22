@@ -79,7 +79,6 @@ type Config struct {
 	Address          string               `json:"address"`
 	PublicAddress    string               `json:"publicAddress"`
 	InsecureAddress  string               `json:"insecureAddress"`
-	AllInsecure      bool                 `json:"allInsecure"`
 	DNSNames         []string             `json:"dnsNames"`
 	KMS              *kms.Options         `json:"kms,omitempty"`
 	SSH              *SSHConfig           `json:"ssh,omitempty"`

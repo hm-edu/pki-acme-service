@@ -248,7 +248,13 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 	}
 	ca.auth = auth
 	var tlsConfig *tls.Config
-	if cfg.AllInsecure {
+	allInsecure := false
+
+	if os.Getenv("STEP_TLS_INSECURE") == "1" {
+		allInsecure = true
+	}
+
+	if allInsecure {
 		var clientTLSConfig *tls.Config
 		if ca.opts.tlsConfig != nil {
 			// try using the tls Configuration supplied by the caller
@@ -425,7 +431,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 
 	baseContext := buildContext(auth, scepAuthority, acmeDB, acmeLinker, client, validationBroker)
 
-	if cfg.AllInsecure {
+	if allInsecure {
 		ca.srv = server.New(cfg.Address, handler, nil)
 	} else {
 		ca.srv = server.New(cfg.Address, handler, tlsConfig)
@@ -434,7 +440,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		return baseContext
 	}
 	if cfg.PublicAddress != "" {
-		if cfg.AllInsecure {
+		if allInsecure {
 			ca.public = server.New(cfg.PublicAddress, publicHandler, nil)
 		} else {
 			ca.public = server.New(cfg.PublicAddress, publicHandler, tlsConfig)
