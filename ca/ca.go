@@ -254,7 +254,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		allInsecure = true
 	}
 
-	if allInsecure {
+	if !allInsecure {
 		var clientTLSConfig *tls.Config
 		if ca.opts.tlsConfig != nil {
 			// try using the tls Configuration supplied by the caller
