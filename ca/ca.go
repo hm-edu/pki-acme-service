@@ -217,14 +217,16 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		return nil, err
 	}
 	ca.auth = auth
+	var tlsConfig *tls.Config
+	if cfg.AllInsecure {
+		tls, clientTLSConfig, err := ca.getTLSConfig(auth, cfg)
+		tlsConfig = tls
+		if err != nil {
+			return nil, err
+		}
 
-	tlsConfig, clientTLSConfig, err := ca.getTLSConfig(auth, cfg)
-	if err != nil {
-		return nil, err
+		webhookTransport.TLSClientConfig = clientTLSConfig
 	}
-
-	webhookTransport.TLSClientConfig = clientTLSConfig
-
 	// Using chi as the main router
 	mux := chi.NewRouter()
 	handler := http.Handler(mux)
@@ -390,12 +392,21 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 
 	baseContext := buildContext(auth, scepAuthority, acmeDB, acmeLinker, client, validationBroker)
 
-	ca.srv = server.New(cfg.Address, handler, tlsConfig)
+	if cfg.AllInsecure {
+		ca.srv = server.New(cfg.Address, handler, nil)
+	} else {
+		ca.srv = server.New(cfg.Address, handler, tlsConfig)
+	}
 	ca.srv.BaseContext = func(net.Listener) context.Context {
 		return baseContext
 	}
 	if cfg.PublicAddress != "" {
-		ca.public = server.New(cfg.PublicAddress, publicHandler, tlsConfig)
+		if cfg.AllInsecure {
+			ca.public = server.New(cfg.PublicAddress, publicHandler, nil)
+		} else {
+			ca.public = server.New(cfg.PublicAddress, publicHandler, tlsConfig)
+		}
+
 		ca.public.BaseContext = func(net.Listener) context.Context {
 			return baseContext
 		}
