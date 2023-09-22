@@ -70,6 +70,13 @@ func (l *LoggerHandler) writeEntry(w ResponseLogger, r *http.Request, t time.Tim
 		addr = r.RemoteAddr
 	}
 
+	// Try to get X-Forwarded-For header first
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		addr = strings.Split(xff, ", ")[0]
+	} else if xrip := r.Header.Get("X-Real-Ip"); xrip != "" {
+		addr = xrip
+	}
+
 	// From https://github.com/gorilla/handlers
 	uri := r.RequestURI
 	// Requests using the CONNECT method over HTTP/2.0 must use
