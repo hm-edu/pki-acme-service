@@ -11,7 +11,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/dgraph-io/badger v1.6.2
 	github.com/dgraph-io/badger/v2 v2.2007.4
-	github.com/dgraph-io/ristretto v0.1.0 // indirect
+	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.4
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/go-jose/go-jose/v3 v3.0.5
@@ -67,9 +67,10 @@ require (
 )
 
 require (
+	github.com/hm-edu/portal-apis v0.0.0-20250102083103-f7750f2a7776
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.34.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.34.0
-	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.18.0
+	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.24.0
 )
 
 require (
@@ -193,8 +194,6 @@ require (
 )
 
 replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.20240506195746-2ea82a22279f
-
-require github.com/hm-edu/portal-apis v0.0.0-20230929065638-ad1f7e7c7ab3
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
