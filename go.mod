@@ -26,7 +26,7 @@ require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/micromdm/scep/v2 v2.1.0
-	github.com/newrelic/go-agent/v3 v3.25.1
+	github.com/newrelic/go-agent/v3 v3.26.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.5.0
 	github.com/sirupsen/logrus v1.9.3
