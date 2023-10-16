@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/security v1.15.1
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
-	github.com/aws/aws-sdk-go v1.45.19 // indirect
+	github.com/aws/aws-sdk-go v1.45.20 // indirect
 	github.com/dgraph-io/badger v1.6.2
 	github.com/dgraph-io/badger/v2 v2.2007.4
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
@@ -38,7 +38,7 @@ require (
 	github.com/urfave/cli v1.22.14
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352
 	go.step.sm/cli-utils v0.8.0
-	go.step.sm/crypto v0.35.1
+	go.step.sm/crypto v0.36.0
 	go.step.sm/linkedca v0.20.1
 	golang.org/x/crypto v0.14.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53

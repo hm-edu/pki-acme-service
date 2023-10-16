@@ -47,8 +47,8 @@ github.com/andybalholm/brotli v1.0.5 h1:8uQZIdzKmjc/iuPu7O2ioW48L81FgatrcpfFmiq/
 github.com/andybalholm/brotli v1.0.5/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
-github.com/aws/aws-sdk-go v1.45.19 h1:+4yXWhldhCVXWFOQRF99ZTJ92t4DtoHROZIbN7Ujk/U=
-github.com/aws/aws-sdk-go v1.45.19/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
+github.com/aws/aws-sdk-go v1.45.20 h1:U/wLZEwqVB6o2XlcJ7um8kczx+A1X2MgO2y4wdKDQTs=
+github.com/aws/aws-sdk-go v1.45.20/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
 github.com/cenkalti/backoff/v3 v3.0.0/go.mod h1:cIeZDE3IrqwwJl6VUwCN6trj1oXrTS4rc0ij+ULvLYs=
@@ -492,8 +492,8 @@ go.opentelemetry.io/proto/otlp v1.0.0 h1:T0TX0tmXU8a3CbNXzEKGeU5mIVOdf0oykP+u2lI
 go.opentelemetry.io/proto/otlp v1.0.0/go.mod h1:Sy6pihPLfYHkr3NkUbEhGHFhINUSI/v80hjKIs5JXpM=
 go.step.sm/cli-utils v0.8.0 h1:b/Tc1/m3YuQq+u3ghTFP7Dz5zUekZj6GUmd5pCvkEXQ=
 go.step.sm/cli-utils v0.8.0/go.mod h1:S77aISrC0pKuflqiDfxxJlUbiXcAanyJ4POOnzFSxD4=
-go.step.sm/crypto v0.35.1 h1:QAZZ7Q8xaM4TdungGSAYw/zxpyH4fMYTkfaXVV9H7pY=
-go.step.sm/crypto v0.35.1/go.mod h1:vn8Vkx/Mbqgoe7AG8btC0qZ995Udm3e+JySuDS1LCJA=
+go.step.sm/crypto v0.36.0 h1:njrVQqjWVyCzHxqQUDprR7HXypZX8IxtOqe4IIHSjgU=
+go.step.sm/crypto v0.36.0/go.mod h1:XMRbgkhoigPLaPMjZeY1VFIYXVw03Wul0+5lENF6l7c=
 go.step.sm/linkedca v0.20.1 h1:bHDn1+UG1NgRrERkWbbCiAIvv4lD5NOFaswPDTyO5vU=
 go.step.sm/linkedca v0.20.1/go.mod h1:Vaq4+Umtjh7DLFI1KuIxeo598vfBzgSYZUjgVJ7Syxw=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
