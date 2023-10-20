@@ -1211,7 +1211,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
-				statusCode: 500,
+				statusCode: 400,
 				ca:         &mockCA{},
 				db: &acme.MockDB{
 					MockGetExternalAccountKeyByAccountID: func(ctx context.Context, provisionerID, accountID string) (*acme.ExternalAccountKey, error) {
@@ -1220,7 +1220,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 						return nil, errors.New("force")
 					},
 				},
-				err: acme.NewErrorISE("error retrieving external account binding key: force"),
+				err: acme.NewError(acme.ErrorEabAccountBindingDoesNotExistType, "The used external account binding seems to be deleted"),
 			}
 		},
 		"fail/newACMEPolicyEngine-error": func(t *testing.T) test {
