@@ -65,6 +65,10 @@ const (
 	ErrorUserActionRequiredType
 	// ErrorNotImplementedType operation is not implemented
 	ErrorNotImplementedType
+	// ErrorEabAlreadyUsedType the external account binding has already been used
+	ErrorEabAlreadyUsedType
+	// ErrorEabDoesNotExistType the external account binding does not exist
+	ErrorEabDoesNotExistType
 )
 
 // String returns the string representation of the acme problem type,
@@ -121,6 +125,10 @@ func (ap ProblemType) String() string {
 		return "userActionRequired"
 	case ErrorNotImplementedType:
 		return "notImplemented"
+	case ErrorEabAlreadyUsedType:
+		return "eabAlreadyUsed"
+	case ErrorEabDoesNotExistType:
+		return "eabDoesNotExist"
 	default:
 		return fmt.Sprintf("unsupported type ACME error type '%d'", int(ap))
 	}
@@ -141,6 +149,16 @@ var (
 		status:  500,
 	}
 	errorMap = map[ProblemType]errorMetadata{
+		ErrorEabAlreadyUsedType: {
+			typ:     officialACMEPrefix + ErrorExternalAccountRequiredType.String(),
+			details: "The external account binding has already been used",
+			status:  400,
+		},
+		ErrorEabDoesNotExistType: {
+			typ:     officialACMEPrefix + ErrorExternalAccountRequiredType.String(),
+			details: "The used external account binding key id does not exist",
+			status:  400,
+		},
 		ErrorAccountDoesNotExistType: {
 			typ:     officialACMEPrefix + ErrorAccountDoesNotExistType.String(),
 			details: "Account does not exist",
