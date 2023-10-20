@@ -137,7 +137,7 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 	var eak *acme.ExternalAccountKey
 	if acmeProv.RequireEAB {
 		if eak, err = db.GetExternalAccountKeyByAccountID(ctx, prov.GetID(), acc.ID); err != nil {
-			render.Error(w, acme.WrapErrorISE(err, "error retrieving external account binding key"))
+			render.Error(w, acme.NewError(acme.ErrorEabAccountBindingDoesNotExistType, "error retrieving external account binding key"))
 			return
 		}
 	}
