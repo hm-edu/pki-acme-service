@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/smallstep/certificates/cas/sectigocas/eab"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +14,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/smallstep/certificates/cas/sectigocas/eab"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
@@ -936,7 +937,7 @@ func TestHandler_NewOrder(t *testing.T) {
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			return test{
 				ctx:        ctx,
-				statusCode: 500,
+				statusCode: 400,
 				ca:         &mockCA{},
 				db: &acme.MockDB{
 					MockGetExternalAccountKeyByAccountID: func(ctx context.Context, provisionerID, accountID string) (*acme.ExternalAccountKey, error) {
@@ -945,7 +946,7 @@ func TestHandler_NewOrder(t *testing.T) {
 						return nil, errors.New("force")
 					},
 				},
-				err: acme.NewErrorISE("error retrieving external account binding key: force"),
+				err: acme.NewError(acme.ErrorEabAccountBindingDoesNotExistType, "The used external account binding seems to be deleted"),
 			}
 		},
 		"fail/newACMEPolicyEngine-error": func(t *testing.T) test {
