@@ -57,19 +57,19 @@ func validateExternalAccountBinding(ctx context.Context, nar *NewAccountRequest)
 		if errors.As(err, &ae) {
 			return nil, acme.WrapError(acme.ErrorUnauthorizedType, err, "the field 'kid' references an unknown key")
 		}
-		return nil, acme.WrapErrorISE(err, "error retrieving external account key")
+		return nil, acme.NewError(acme.ErrorEabDoesNotExistType, "error retrieving external account key")
 	}
 
 	if externalAccountKey == nil {
 		return nil, acme.NewError(acme.ErrorUnauthorizedType, "the field 'kid' references an unknown key")
 	}
 
-	if len(externalAccountKey.HmacKey) == 0 {
-		return nil, acme.NewError(acme.ErrorServerInternalType, "external account binding key with id '%s' does not have secret bytes", keyID)
-	}
-
 	if externalAccountKey.AlreadyBound() {
 		return nil, acme.NewError(acme.ErrorUnauthorizedType, "external account binding key with id '%s' was already bound to account '%s' on %s", keyID, externalAccountKey.AccountID, externalAccountKey.BoundAt)
+	}
+
+	if len(externalAccountKey.HmacKey) == 0 {
+		return nil, acme.NewError(acme.ErrorEabAlreadyUsedType, "external account binding key with id '%s' does not have secret bytes", keyID)
 	}
 
 	payload, err := eabJWS.Verify(externalAccountKey.HmacKey)
