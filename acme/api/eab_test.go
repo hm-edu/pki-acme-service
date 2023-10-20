@@ -312,7 +312,7 @@ func TestHandler_validateExternalAccountBinding(t *testing.T) {
 					ExternalAccountBinding: eab,
 				},
 				eak: nil,
-				err: acme.NewErrorISE("error retrieving external account key"),
+				err: acme.NewError(acme.ErrorEabDoesNotExistType, "error retrieving external account key"),
 			}
 		},
 		"fail/db.GetExternalAccountKey-not-found": func(t *testing.T) test {
@@ -361,7 +361,7 @@ func TestHandler_validateExternalAccountBinding(t *testing.T) {
 					ExternalAccountBinding: eab,
 				},
 				eak: nil,
-				err: acme.NewErrorISE("error retrieving external account key"),
+				err: acme.NewError(acme.ErrorEabDoesNotExistType, "error retrieving external account key"),
 			}
 		},
 		"fail/db.GetExternalAccountKey-error": func(t *testing.T) test {
@@ -410,7 +410,7 @@ func TestHandler_validateExternalAccountBinding(t *testing.T) {
 					ExternalAccountBinding: eab,
 				},
 				eak: nil,
-				err: acme.NewErrorISE("error retrieving external account key"),
+				err: acme.NewError(acme.ErrorEabDoesNotExistType, "error retrieving external account key"),
 			}
 		},
 		"fail/db.GetExternalAccountKey-nil": func(t *testing.T) test {
@@ -516,7 +516,7 @@ func TestHandler_validateExternalAccountBinding(t *testing.T) {
 					ExternalAccountBinding: eab,
 				},
 				eak: nil,
-				err: acme.NewError(acme.ErrorServerInternalType, "external account binding key with id 'eakID' does not have secret bytes"),
+				err: acme.NewError(acme.ErrorEabAlreadyUsedType, "external account binding key with id 'eakID' does not have secret bytes"),
 			}
 		},
 		"fail/db.GetExternalAccountKey-wrong-provisioner": func(t *testing.T) test {
