@@ -69,6 +69,8 @@ const (
 	ErrorEabAlreadyUsedType
 	// ErrorEabDoesNotExistType the external account binding does not exist
 	ErrorEabDoesNotExistType
+	// ErrorEabAccountBindingDoesNotExistType the external account binding does not exist
+	ErrorEabAccountBindingDoesNotExistType
 )
 
 // String returns the string representation of the acme problem type,
@@ -129,6 +131,8 @@ func (ap ProblemType) String() string {
 		return "eabAlreadyUsed"
 	case ErrorEabDoesNotExistType:
 		return "eabDoesNotExist"
+	case ErrorEabAccountBindingDoesNotExistType:
+		return "eabAccountBindingDoesNotExist"
 	default:
 		return fmt.Sprintf("unsupported type ACME error type '%d'", int(ap))
 	}
@@ -157,6 +161,11 @@ var (
 		ErrorEabDoesNotExistType: {
 			typ:     officialACMEPrefix + ErrorExternalAccountRequiredType.String(),
 			details: "The used external account binding key id does not exist",
+			status:  400,
+		},
+		ErrorEabAccountBindingDoesNotExistType: {
+			typ:     officialACMEPrefix + ErrorExternalAccountRequiredType.String(),
+			details: "The used external account binding seems to be deleted",
 			status:  400,
 		},
 		ErrorAccountDoesNotExistType: {
