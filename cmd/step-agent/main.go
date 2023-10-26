@@ -66,6 +66,7 @@ var agent = cli.Command{
 		options.OnReconnecting = func(mqtt.Client, *mqtt.ClientOptions) {
 			logrus.Println("mqtt reconnecting")
 		}
+
 		client := mqtt.NewClient(options)
 		if token := client.Connect(); token.WaitTimeout(30*time.Second) && token.Error() != nil {
 			logrus.Warn(token.Error())
@@ -81,9 +82,6 @@ var agent = cli.Command{
 			req := msg.Payload()
 			json.Unmarshal(req, &data)
 
-			logrus.Infof("authz: %s", data.Authz)
-			logrus.Infof("target: %s", data.Target)
-			logrus.Infof("account: %s", data.Challenge)
 			logger := logrus.WithField("authz", data.Authz).WithField("target", data.Target).WithField("account", data.Challenge)
 
 			http := acme.NewClient()
@@ -120,7 +118,9 @@ var agent = cli.Command{
 			// Publish to topic
 			token := client.Publish(fmt.Sprintf("%s/data", c.String("organization")), 0, false, json)
 			if token.WaitTimeout(30*time.Second) && token.Error() != nil {
-				logrus.WithError(token.Error()).Warn("publishing failed")
+				logger.WithError(token.Error()).Warn("publishing failed")
+			} else {
+				logger.Infof("published to topic %s", fmt.Sprintf("%s/data", c.String("organization")))
 			}
 
 		})
