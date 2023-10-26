@@ -72,7 +72,7 @@ var agent = cli.Command{
 		}
 
 		// Subscribe to topic
-		client.Subscribe(fmt.Sprintf("%s/jobs", c.String("organization")), 0, func(client mqtt.Client, msg mqtt.Message) {
+		token := client.Subscribe(fmt.Sprintf("%s/jobs", c.String("organization")), 0, func(client mqtt.Client, msg mqtt.Message) {
 			logrus.Infof("received message on topic %s", msg.Topic())
 			logrus.Infof("message: %s", msg.Payload())
 
@@ -124,6 +124,10 @@ var agent = cli.Command{
 			}
 
 		})
+
+		if token.WaitTimeout(30*time.Second) && token.Error() != nil {
+			logrus.WithError(token.Error()).Warn("subscribing failed")
+		}
 
 		return nil
 	},
