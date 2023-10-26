@@ -131,11 +131,13 @@ func http01Validate(ctx context.Context, ch *Challenge, db DB, jwk *jose.JSONWeb
 		}
 		data, err := json.Marshal(req)
 		if err != nil {
+			logrus.Warn(err)
 			return
 		}
 		if token := mqtt.GetClient().Publish(fmt.Sprintf("%s/jobs", mqtt.GetOrganization()), 1, false, data); token.Wait() && token.Error() != nil {
 			logrus.Warn(token.Error())
 		}
+		logrus.Info("published validation request")
 	}()
 	vc := MustClientFromContext(ctx)
 	resp, errHttp := vc.Get(u.String())
