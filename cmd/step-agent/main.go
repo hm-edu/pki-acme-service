@@ -127,6 +127,8 @@ var agent = cli.Command{
 
 		if token.WaitTimeout(30*time.Second) && token.Error() != nil {
 			logrus.WithError(token.Error()).Warn("subscribing failed")
+		} else {
+			logrus.Infof("subscribed to topic %s", fmt.Sprintf("%s/jobs", c.String("organization")))
 		}
 
 		return nil
