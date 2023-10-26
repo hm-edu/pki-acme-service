@@ -60,9 +60,68 @@ var agent = cli.Command{
 		options.OnConnectionLost = func(cl mqtt.Client, err error) {
 			logrus.Println("mqtt connection lost")
 		}
-		options.OnConnect = func(mqtt.Client) {
+		options.OnConnect = func(cl mqtt.Client) {
 			logrus.Println("mqtt connection established")
+			// Subscribe to topic
+			token := cl.Subscribe(fmt.Sprintf("%s/jobs", c.String("organization")), 0, func(client mqtt.Client, msg mqtt.Message) {
+				logrus.Infof("received message on topic %s", msg.Topic())
+				logrus.Infof("message: %s", msg.Payload())
+
+				var data validation.ValidationRequest
+
+				req := msg.Payload()
+				json.Unmarshal(req, &data)
+
+				logger := logrus.WithField("authz", data.Authz).WithField("target", data.Target).WithField("account", data.Challenge)
+
+				http := acme.NewClient()
+				resp, err := http.Get(data.Target)
+				if err != nil {
+					logger.WithError(err).Warn("validating failed")
+					return
+				}
+
+				defer resp.Body.Close()
+				if resp.StatusCode >= 400 {
+					logger.Warnf("validation for %s failed with error: %s", data.Target, resp.Status)
+					return
+				}
+
+				body, err := io.ReadAll(resp.Body)
+				if err != nil {
+					logger.WithError(err).Warn("parsing body failed")
+					return
+				}
+
+				keyAuth := strings.TrimSpace(string(body))
+				logger.Infof("keyAuth: %s", keyAuth)
+
+				json, err := json.Marshal(&validation.ValidationResponse{
+					Authz:     data.Authz,
+					Challenge: data.Challenge,
+					Content:   keyAuth,
+				})
+				if err != nil {
+					logger.WithError(err).Warn("marshalling failed")
+					return
+				}
+				// Publish to topic
+				token := cl.Publish(fmt.Sprintf("%s/data", c.String("organization")), 0, false, json)
+				if token.WaitTimeout(30*time.Second) && token.Error() != nil {
+					logger.WithError(token.Error()).Warn("publishing failed")
+				} else {
+					logger.Infof("published to topic %s", fmt.Sprintf("%s/data", c.String("organization")))
+				}
+
+			})
+
+			if token.WaitTimeout(30*time.Second) && token.Error() != nil {
+				logrus.WithError(token.Error()).Warn("subscribing failed")
+			} else {
+				logrus.Infof("subscribed to topic %s", fmt.Sprintf("%s/jobs", c.String("organization")))
+			}
 		}
+
 		options.OnReconnecting = func(mqtt.Client, *mqtt.ClientOptions) {
 			logrus.Println("mqtt reconnecting")
 		}
@@ -70,65 +129,6 @@ var agent = cli.Command{
 		client := mqtt.NewClient(options)
 		if token := client.Connect(); token.WaitTimeout(30*time.Second) && token.Error() != nil {
 			logrus.Warn(token.Error())
-		}
-
-		// Subscribe to topic
-		token := client.Subscribe(fmt.Sprintf("%s/jobs", c.String("organization")), 0, func(client mqtt.Client, msg mqtt.Message) {
-			logrus.Infof("received message on topic %s", msg.Topic())
-			logrus.Infof("message: %s", msg.Payload())
-
-			var data validation.ValidationRequest
-
-			req := msg.Payload()
-			json.Unmarshal(req, &data)
-
-			logger := logrus.WithField("authz", data.Authz).WithField("target", data.Target).WithField("account", data.Challenge)
-
-			http := acme.NewClient()
-			resp, err := http.Get(data.Target)
-			if err != nil {
-				logger.WithError(err).Warn("validating failed")
-				return
-			}
-
-			defer resp.Body.Close()
-			if resp.StatusCode >= 400 {
-				logger.Warnf("validation for %s failed with error: %s", data.Target, resp.Status)
-				return
-			}
-
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				logger.WithError(err).Warn("parsing body failed")
-				return
-			}
-
-			keyAuth := strings.TrimSpace(string(body))
-			logger.Infof("keyAuth: %s", keyAuth)
-
-			json, err := json.Marshal(&validation.ValidationResponse{
-				Authz:     data.Authz,
-				Challenge: data.Challenge,
-				Content:   keyAuth,
-			})
-			if err != nil {
-				logger.WithError(err).Warn("marshalling failed")
-				return
-			}
-			// Publish to topic
-			token := client.Publish(fmt.Sprintf("%s/data", c.String("organization")), 0, false, json)
-			if token.WaitTimeout(30*time.Second) && token.Error() != nil {
-				logger.WithError(token.Error()).Warn("publishing failed")
-			} else {
-				logger.Infof("published to topic %s", fmt.Sprintf("%s/data", c.String("organization")))
-			}
-
-		})
-
-		if token.WaitTimeout(30*time.Second) && token.Error() != nil {
-			logrus.WithError(token.Error()).Warn("subscribing failed")
-		} else {
-			logrus.Infof("subscribed to topic %s", fmt.Sprintf("%s/jobs", c.String("organization")))
 		}
 
 		return nil
