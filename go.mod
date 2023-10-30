@@ -5,7 +5,7 @@ go 1.20
 require (
 	cloud.google.com/go v0.110.8 // indirect
 	cloud.google.com/go/longrunning v0.5.2
-	cloud.google.com/go/security v1.15.2
+	cloud.google.com/go/security v1.15.3
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
 	github.com/aws/aws-sdk-go v1.45.26 // indirect
