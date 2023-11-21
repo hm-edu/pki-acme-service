@@ -56,16 +56,16 @@ require (
 	cloud.google.com/go/kms v1.15.5 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1
-	go.opentelemetry.io/contrib/propagators/b3 v1.20.0
+	go.opentelemetry.io/contrib/propagators/b3 v1.21.1
 	go.opentelemetry.io/otel v1.21.0
 )
 
-require go.opentelemetry.io/otel/sdk v1.19.0
+require go.opentelemetry.io/otel/sdk v1.21.0
 
 require (
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.19.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.19.0
-	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.19.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.21.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.21.0
+	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.21.0
 )
 
 require (
