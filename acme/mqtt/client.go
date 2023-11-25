@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -74,11 +75,18 @@ func Connect(acmeDB acme.DB, host, user, password, organization string) (validat
 				ch.Status = acme.StatusValid
 				ch.Error = nil
 				ch.ValidatedAt = clock.Now().Format(time.RFC3339)
-
-				if err = acmeDB.UpdateChallenge(ctx, ch); err != nil {
-					logrus.Errorf("error updating challenge: %v", err)
-				} else {
+				for {
+					if err = acmeDB.UpdateChallenge(ctx, ch); err != nil {
+						if strings.Contains(err.Error(), "changed since last read") {
+							// If the challenge has changed since we read it, then we
+							// don't want to overwrite the error.
+							logrus.Warn("challenge changed since last read -> retry saving")
+							continue
+						}
+						logrus.Errorf("error updating challenge: %v", err)
+					}
 					logrus.Infof("challenge %s updated to valid", u.String())
+					break
 				}
 
 			})
