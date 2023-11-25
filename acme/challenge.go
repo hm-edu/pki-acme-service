@@ -181,9 +181,17 @@ func http01Validate(ctx context.Context, ch *Challenge, db DB, jwk *jose.JSONWeb
 	ch.Status = StatusValid
 	ch.Error = nil
 	ch.ValidatedAt = clock.Now().Format(time.RFC3339)
-
-	if err = db.UpdateChallenge(ctx, ch); err != nil {
-		return WrapErrorISE(err, "error updating challenge")
+	for {
+		if err = db.UpdateChallenge(ctx, ch); err != nil {
+			if strings.Contains(err.Error(), "changed since last read") {
+				// If the challenge has changed since we read it, then we
+				// don't want to overwrite the error.
+				logrus.Warn("challenge changed since last read -> retry saving")
+				continue
+			}
+			return WrapErrorISE(err, "error updating challenge")
+		}
+		break
 	}
 	return nil
 }
