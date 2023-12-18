@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/security v1.15.4
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
-	github.com/aws/aws-sdk-go v1.48.7 // indirect
+	github.com/aws/aws-sdk-go v1.49.1 // indirect
 	github.com/dgraph-io/badger v1.6.2
 	github.com/dgraph-io/badger/v2 v2.2007.4
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
@@ -37,12 +37,12 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli v1.22.14
 	go.step.sm/cli-utils v0.8.0
-	go.step.sm/crypto v0.38.0
+	go.step.sm/crypto v0.40.0
 	go.step.sm/linkedca v0.20.1
 	golang.org/x/crypto v0.16.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
 	golang.org/x/net v0.19.0
-	google.golang.org/api v0.152.0
+	google.golang.org/api v0.153.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/square/go-jose.v2 v2.6.0
@@ -67,11 +67,11 @@ require (
 )
 
 require (
-	filippo.io/edwards25519 v1.0.0 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.10.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.0 // indirect
