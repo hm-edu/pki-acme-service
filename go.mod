@@ -18,7 +18,7 @@ require (
 	github.com/google/go-tpm v0.9.0
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.12.0
-	github.com/hashicorp/vault/api v1.10.0
+	github.com/hashicorp/vault/api v1.12.0
 	github.com/hashicorp/vault/api/auth/approle v0.5.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.5.0
 	github.com/hm-edu/portal-apis v0.0.0-20230929065638-ad1f7e7c7ab3
