@@ -18,12 +18,12 @@ require (
 	github.com/google/go-tpm v0.9.0
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.12.2
-	github.com/hashicorp/vault/api v1.12.0
+	github.com/hashicorp/vault/api v1.12.1
 	github.com/hashicorp/vault/api/auth/approle v0.6.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.6.0
 	github.com/hm-edu/portal-apis v0.0.0-20230929065638-ad1f7e7c7ab3
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/newrelic/go-agent/v3 v3.30.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.19.0
