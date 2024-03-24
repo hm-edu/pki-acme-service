@@ -588,8 +588,8 @@ func (ca *CA) Run() error {
 		defer wg.Done()
 		errs <- ca.srv.ListenAndServe()
 	}()
-	wg.Add(1)
 	if ca.public != nil {
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			errs <- ca.public.ListenAndServe()
