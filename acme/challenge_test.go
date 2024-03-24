@@ -532,6 +532,9 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 					},
 				},
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -569,6 +572,9 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 					},
 				},
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -611,6 +617,9 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 					},
 				},
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -1534,6 +1543,9 @@ func TestHTTP01Validate(t *testing.T) {
 					},
 				},
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -1569,6 +1581,9 @@ func TestHTTP01Validate(t *testing.T) {
 					},
 				},
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -1606,6 +1621,9 @@ func TestHTTP01Validate(t *testing.T) {
 					},
 				},
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -1644,6 +1662,9 @@ func TestHTTP01Validate(t *testing.T) {
 					},
 				},
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -1679,6 +1700,11 @@ func TestHTTP01Validate(t *testing.T) {
 						}, nil
 					},
 				},
+				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
+				},
 				err: NewErrorISE("error reading response body for url http://zap.internal/.well-known/acme-challenge/%s: force", ch.Token),
 			}
 		},
@@ -1703,6 +1729,11 @@ func TestHTTP01Validate(t *testing.T) {
 					},
 				},
 				jwk: jwk,
+				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
+				},
 				err: NewErrorISE("error generating JWK thumbprint: go-jose/go-jose: unknown key type 'string'"),
 			}
 		},
@@ -1730,6 +1761,9 @@ func TestHTTP01Validate(t *testing.T) {
 				},
 				jwk: jwk,
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -1773,6 +1807,9 @@ func TestHTTP01Validate(t *testing.T) {
 				},
 				jwk: jwk,
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -1817,6 +1854,9 @@ func TestHTTP01Validate(t *testing.T) {
 				},
 				jwk: jwk,
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
@@ -1860,6 +1900,9 @@ func TestHTTP01Validate(t *testing.T) {
 				},
 				jwk: jwk,
 				db: &MockDB{
+					MockGetChallenge: func(ctx context.Context, id, authzID string) (*Challenge, error) {
+						return ch, nil
+					},
 					MockUpdateChallenge: func(ctx context.Context, updch *Challenge) error {
 						assert.Equal(t, "chID", updch.ID)
 						assert.Equal(t, "token", updch.Token)
