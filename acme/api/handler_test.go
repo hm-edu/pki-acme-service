@@ -683,9 +683,11 @@ func TestHandler_GetChallenge(t *testing.T) {
 						assert.Equals(t, chID, "chID")
 						assert.Equals(t, azID, "authzID")
 						return &acme.Challenge{
-							Status:    acme.StatusPending,
-							Type:      acme.HTTP01,
-							AccountID: "accID",
+							ID:              chID,
+							AuthorizationID: azID,
+							Status:          acme.StatusPending,
+							Type:            acme.HTTP01,
+							AccountID:       "accID",
 						}, nil
 					},
 					MockUpdateChallenge: func(ctx context.Context, ch *acme.Challenge) error {
