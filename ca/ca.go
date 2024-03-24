@@ -426,9 +426,12 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 	insecureHandler = requestid.New(legacyTraceHeader).Middleware(insecureHandler)
 
 	// Create context with all the necessary values.
-	client, err := eab.Connect(cfg.ManagementHost)
-	if err != nil {
-		return nil, errors.Wrap(err, "error connecting to EAB")
+	var eabClient pb.EABServiceClient
+	if cfg.ManagementHost != "" {
+		eabClient, err = eab.Connect(cfg.ManagementHost)
+		if err != nil {
+			return nil, errors.Wrap(err, "error connecting to EAB")
+		}
 	}
 	var validationBroker validation.MqttClient
 	if cfg.ValidationBroker != nil {
@@ -443,7 +446,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 		}
 	}
 
-	baseContext := buildContext(auth, scepAuthority, acmeDB, acmeLinker, client, validationBroker)
+	baseContext := buildContext(auth, scepAuthority, acmeDB, acmeLinker, eabClient, validationBroker)
 
 	if allInsecure {
 		ca.srv = server.New(cfg.Address, handler, nil)
