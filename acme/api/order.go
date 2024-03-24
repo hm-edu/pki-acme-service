@@ -180,13 +180,15 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 		NotAfter:         nor.NotAfter,
 	}
 
-	if missing, err := checkPermission(ctx, o.Identifiers, eak); len(missing) != 0 || err != nil {
-		if err != nil {
-			render.Error(w, r, acme.NewError(acme.ErrorServerInternalType, "Internal server error"))
+	if acmeProv.RequireEAB {
+		if missing, err := checkPermission(ctx, o.Identifiers, eak); len(missing) != 0 || err != nil {
+			if err != nil {
+				render.Error(w, r, acme.NewError(acme.ErrorServerInternalType, "Internal server error"))
+				return
+			}
+			render.Error(w, r, acme.NewError(acme.ErrorRejectedIdentifierType, "Missing registration for domain(s) %v", missing))
 			return
 		}
-		render.Error(w, r, acme.NewError(acme.ErrorRejectedIdentifierType, "Missing registration for domain(s) %v", missing))
-		return
 	}
 
 	for i, identifier := range o.Identifiers {
