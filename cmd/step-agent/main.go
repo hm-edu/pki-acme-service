@@ -67,7 +67,7 @@ var agent = cli.Command{
 				logrus.Infof("received message on topic %s", msg.Topic())
 				logrus.Infof("message: %s", msg.Payload())
 
-				var data validation.ValidationRequest
+				var data validation.Request
 
 				req := msg.Payload()
 				json.Unmarshal(req, &data)
@@ -96,13 +96,13 @@ var agent = cli.Command{
 				keyAuth := strings.TrimSpace(string(body))
 				logger.Infof("keyAuth: %s", keyAuth)
 
-				json, err := json.Marshal(&validation.ValidationResponse{
+				json, err := json.Marshal(&validation.Response{
 					Authz:     data.Authz,
 					Challenge: data.Challenge,
 					Content:   keyAuth,
 				})
 				if err != nil {
-					logger.WithError(err).Warn("marshalling failed")
+					logger.WithError(err).Warn("marshaling failed")
 					return
 				}
 				// Publish to topic
@@ -156,9 +156,7 @@ func main() {
 	app.Name = "step-agent"
 	app.Usage = "step-agent"
 	app.Version = step.Version()
-	app.Action = func(c *cli.Context) error {
-		return agent.Run(c)
-	}
+	app.Action = agent.Run
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)

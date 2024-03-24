@@ -6,13 +6,13 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type ValidationResponse struct {
+type Response struct {
 	Authz     string `json:"authz"`
 	Challenge string `json:"challenge"`
 	Content   string `json:"content"`
 }
 
-type ValidationRequest struct {
+type Request struct {
 	Authz     string `json:"authz"`
 	Challenge string `json:"challenge"`
 	Target    string `json:"target"`

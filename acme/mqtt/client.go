@@ -41,7 +41,7 @@ func Connect(acmeDB acme.DB, host, user, password, organization string) (validat
 				logrus.Printf("Received message on topic: %s\nMessage: %s\n", msg.Topic(), msg.Payload())
 				ctx := context.Background()
 				data := msg.Payload()
-				var payload validation.ValidationResponse
+				var payload validation.Response
 				err := json.Unmarshal(data, &payload)
 				if err != nil {
 					logrus.Errorf("error unmarshalling payload: %v", err)
@@ -88,7 +88,6 @@ func Connect(acmeDB acme.DB, host, user, password, organization string) (validat
 					logrus.Infof("challenge %s updated to valid", u.String())
 					break
 				}
-
 			})
 		}()
 	}

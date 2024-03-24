@@ -728,7 +728,6 @@ func (ca *CA) Reload() error {
 // get TLSConfig returns separate TLSConfigs for server and client with the
 // same self-renewing certificate.
 func (ca *CA) getTLSConfig(auth *authority.Authority, cfg *config.Config) (*tls.Config, *tls.Config, error) {
-
 	if cfg.Storage != "" {
 		err := os.Mkdir(cfg.Storage, 0600)
 		if err != nil && !os.IsExist(err) {

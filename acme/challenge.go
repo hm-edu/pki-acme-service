@@ -124,7 +124,7 @@ func http01Validate(ctx context.Context, ch *Challenge, db DB, jwk *jose.JSONWeb
 		if !ok {
 			return
 		}
-		req := validation.ValidationRequest{
+		req := validation.Request{
 			Authz:     ch.AuthorizationID,
 			Challenge: ch.ID,
 			Target:    u.String(),
@@ -140,7 +140,7 @@ func http01Validate(ctx context.Context, ch *Challenge, db DB, jwk *jose.JSONWeb
 		logrus.Info("published validation request")
 	}()
 	vc := MustClientFromContext(ctx)
-	resp, errHttp := vc.Get(u.String())
+	resp, errHTTP := vc.Get(u.String())
 	// get challenge again and check if it was already validated
 	chDb, errDb := db.GetChallenge(ctx, ch.ID, ch.AuthorizationID)
 	if errDb == nil {
@@ -151,8 +151,8 @@ func http01Validate(ctx context.Context, ch *Challenge, db DB, jwk *jose.JSONWeb
 	} else {
 		logrus.WithError(errDb).WithField("challenge", ch.ID).WithField("authz", ch.AuthorizationID).Warn("error getting challenge from db")
 	}
-	if errHttp != nil {
-		return storeError(ctx, db, ch, false, WrapError(ErrorConnectionType, errHttp,
+	if errHTTP != nil {
+		return storeError(ctx, db, ch, false, WrapError(ErrorConnectionType, errHTTP,
 			"error doing http GET for url %s", u))
 	}
 	defer resp.Body.Close()

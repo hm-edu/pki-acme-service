@@ -987,7 +987,6 @@ func (a *Authority) GetTLSCertificate(storage string, renew bool) (*tls.Certific
 	tlsCrt.Leaf = resp.Certificate
 	os.WriteFile(fmt.Sprintf("%s/%s", storage, "ca.crt"), pemBlocks, 0600)
 	return &tlsCrt, nil
-
 }
 
 // RFC 5280, 5.2.5

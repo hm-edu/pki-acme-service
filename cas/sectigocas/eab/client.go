@@ -33,7 +33,6 @@ func MustFromContext(ctx context.Context) pb.EABServiceClient {
 }
 
 func Connect(host string) (pb.EABServiceClient, error) {
-
 	conn, err := grpc.DialContext(
 		context.Background(),
 		host,
@@ -46,5 +45,4 @@ func Connect(host string) (pb.EABServiceClient, error) {
 
 	apiClient := pb.NewEABServiceClient(conn)
 	return apiClient, nil
-
 }

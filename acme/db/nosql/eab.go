@@ -361,7 +361,7 @@ func (db *DB) addEAKID(ctx context.Context, provisionerID, eakID string) error {
 	if err = db.save(ctx, provisionerID, _new, _old, "externalAccountKeyIDsByProvisionerID", externalAccountKeyIDsByProvisionerIDTable); err != nil {
 		if len(eakIDs) == 0 {
 			logrus.Warnf("error replacing empty eakID list for provisioner %s", provisionerID)
-			if err_internal := db.save(ctx, provisionerID, _new, []string{}, "externalAccountKeyIDsByProvisionerID", externalAccountKeyIDsByProvisionerIDTable); err_internal != nil {
+			if errInternal := db.save(ctx, provisionerID, _new, []string{}, "externalAccountKeyIDsByProvisionerID", externalAccountKeyIDsByProvisionerIDTable); errInternal != nil {
 				return errors.Wrapf(err, "error saving eakIDs index for provisioner %s", provisionerID)
 			}
 		} else {
