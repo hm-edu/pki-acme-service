@@ -13,7 +13,7 @@ jobs:
       # Use docker.io for Docker Hub if empty
       REGISTRY: ghcr.io
       # github.repository as <account>/<repo>
-      IMAGE_NAME: ${{ github.repository }}
+      IMAGE_NAME: hm-edu/certificates
     permissions:
       contents: read
       packages: write
@@ -54,7 +54,7 @@ jobs:
       # Use docker.io for Docker Hub if empty
       REGISTRY: ghcr.io
       # github.repository as <account>/<repo>
-      IMAGE_NAME: ${{ github.repository }}
+      IMAGE_NAME: hm-edu/certificates-agent
     permissions:
       contents: read
       packages: write
