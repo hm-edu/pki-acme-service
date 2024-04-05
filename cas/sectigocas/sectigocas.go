@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"time"
 
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/acme/api"
@@ -37,23 +36,17 @@ func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-	defer cancel()
 
-	conn, err := grpc.DialContext(
-		ctx,
+	conn, err := grpc.NewClient(
 		config.PKIBackend,
-		grpc.WithBlock(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		return nil, err
 	}
 	sslServiceClient := pb.NewSSLServiceClient(conn)
-	conn, err = grpc.DialContext(
-		ctx,
+	conn, err = grpc.NewClient(
 		config.EABBackend,
-		grpc.WithBlock(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
