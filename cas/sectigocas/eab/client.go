@@ -34,11 +34,10 @@ func MustFromContext(ctx context.Context) pb.EABServiceClient {
 
 func Connect(host string) (pb.EABServiceClient, error) {
 
-	conn, err := grpc.DialContext(
-		context.Background(),
+	conn, err := grpc.NewClient(
 		host,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		return nil, err
