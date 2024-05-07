@@ -243,7 +243,7 @@ type testCAS struct {
 	ca *minica.CA
 }
 
-func (c *testCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
+func (c *testCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
 	cert, err := c.ca.SignCSR(req.CSR)
 	if err != nil {
 		return nil, fmt.Errorf("failed signing CSR: %w", err)
@@ -254,11 +254,11 @@ func (c *testCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1
 		CertificateChain: []*x509.Certificate{cert, c.ca.Intermediate},
 	}, nil
 }
-func (c *testCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
+func (c *testCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (c *testCAS) RevokeCertificate(req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+func (c *testCAS) RevokeCertificate(ctx context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
 	return nil, errors.New("not implemented")
 }
 
