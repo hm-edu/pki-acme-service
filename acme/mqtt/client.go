@@ -25,7 +25,7 @@ func Connect(acmeDB acme.DB, host, user, password, organization string) (validat
 	opts.PingTimeout = time.Second    // local broker so response should be quick
 	opts.ConnectRetry = true
 	opts.AutoReconnect = true
-	opts.ClientID = "acme"
+	opts.ClientID = fmt.Sprintf("acme-%s", organization)
 	opts.Username = user
 	opts.Password = password
 	opts.AddBroker(fmt.Sprintf("ssl://%s:8883", host))
