@@ -1961,13 +1961,13 @@ func TestAuthority_CRL(t *testing.T) {
 
 type notImplementedCAS struct{}
 
-func (notImplementedCAS) CreateCertificate(req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
+func (notImplementedCAS) CreateCertificate(context context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
 	return nil, apiv1.NotImplementedError{}
 }
-func (notImplementedCAS) RenewCertificate(req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
+func (notImplementedCAS) RenewCertificate(context context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
 	return nil, apiv1.NotImplementedError{}
 }
-func (notImplementedCAS) RevokeCertificate(req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+func (notImplementedCAS) RevokeCertificate(context context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
 	return nil, apiv1.NotImplementedError{}
 }
 
