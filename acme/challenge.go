@@ -100,7 +100,7 @@ func (ch *Challenge) ToLog() (interface{}, error) {
 // 'validated' attributes are updated.
 func (ch *Challenge) Validate(ctx context.Context, db DB, jwk *jose.JSONWebKey, payload []byte) error {
 	// If already valid or invalid then return without performing validation.
-	if ch.Status != StatusPending {
+	if ch.Status != StatusPending && ch.Status != StatusInvalid {
 		return nil
 	}
 	switch ch.Type {

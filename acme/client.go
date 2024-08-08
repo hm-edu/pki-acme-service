@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Client is the interface used to verify ACME challenges.
@@ -74,6 +76,7 @@ func NewClient() Client {
 
 func getResolver() *net.Resolver {
 	if os.Getenv("DNS_RESOLVER") != "" {
+		logrus.Infof("Using custom DNS resolver: %s", os.Getenv("DNS_RESOLVER"))
 		return &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
