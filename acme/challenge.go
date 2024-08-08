@@ -383,6 +383,7 @@ func dns01Validate(ctx context.Context, ch *Challenge, db DB, jwk *jose.JSONWebK
 	vc := MustClientFromContext(ctx)
 	txtRecords, err := vc.LookupTxt(dns01ChallengeHost(domain))
 	if err != nil {
+		logrus.Warnf("error looking up TXT records for domain %s: %v", domain, err)
 		return storeError(ctx, db, ch, false, WrapError(ErrorDNSType, err,
 			"error looking up TXT records for domain %s", domain))
 	}

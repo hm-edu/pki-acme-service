@@ -3,8 +3,10 @@ package acme
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -45,8 +47,9 @@ func MustClientFromContext(ctx context.Context) Client {
 }
 
 type client struct {
-	http   *http.Client
-	dialer *net.Dialer
+	http     *http.Client
+	dialer   *net.Dialer
+	resolver *net.Resolver
 }
 
 // NewClient returns an implementation of Client for verifying ACME challenges.
@@ -65,7 +68,22 @@ func NewClient() Client {
 		dialer: &net.Dialer{
 			Timeout: 30 * time.Second,
 		},
+		resolver: getResolver(),
 	}
+}
+
+func getResolver() *net.Resolver {
+	if os.Getenv("DNS_RESOLVER") != "" {
+		return &net.Resolver{
+			PreferGo: true,
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				d := net.Dialer{
+					Timeout: time.Millisecond * time.Duration(10000),
+				}
+				return d.DialContext(ctx, network, fmt.Sprintf("%s:53", os.Getenv("DNS_RESOLVER")))
+			}}
+	}
+	return net.DefaultResolver
 }
 
 func (c *client) Get(url string) (*http.Response, error) {
@@ -73,7 +91,7 @@ func (c *client) Get(url string) (*http.Response, error) {
 }
 
 func (c *client) LookupTxt(name string) ([]string, error) {
-	return net.LookupTXT(name)
+	return c.resolver.LookupTXT(context.Background(), name)
 }
 
 func (c *client) TLSDial(network, addr string, config *tls.Config) (*tls.Conn, error) {
