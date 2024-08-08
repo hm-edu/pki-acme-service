@@ -1212,6 +1212,7 @@ func KeyAuthorization(token string, jwk *jose.JSONWebKey) (string, error) {
 func storeError(ctx context.Context, db DB, ch *Challenge, markInvalid bool, err *Error) error {
 	ch.Error = err
 	if markInvalid {
+		logrus.Warnf("marking challenge %s as invalid: %v", ch.ID, err)
 		ch.Status = StatusInvalid
 	}
 	if err := db.UpdateChallenge(ctx, ch); err != nil {
