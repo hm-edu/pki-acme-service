@@ -79,14 +79,14 @@ func (c *client) Get(url string) (*http.Response, error) {
 
 var timeouts [5]time.Duration = [5]time.Duration{(time.Second * 1), (time.Second * 1), (time.Second * 2), (time.Second * 4), (time.Second * 2)}
 
-func ResolveWithTimeout(name, resolver string) (*dns.Msg, error) {
+func ResolveWithTimeout(name, resolver string, qtype, qclass uint16) (*dns.Msg, error) {
 	client := new(dns.Client)
 	msg := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
 			Id:               dns.Id(),
 			RecursionDesired: true,
 		},
-		Question: []dns.Question{{Name: dns.Fqdn(name), Qtype: dns.TypeTXT, Qclass: dns.ClassINET}},
+		Question: []dns.Question{{Name: dns.Fqdn(name), Qtype: qtype, Qclass: qclass}},
 	}
 	msg.AuthenticatedData = true
 	msg.SetEdns0(4096, true)
@@ -101,7 +101,7 @@ func ResolveWithTimeout(name, resolver string) (*dns.Msg, error) {
 		}
 		if err != nil {
 			if err, ok := err.(net.Error); ok && err.Timeout() {
-				logrus.Warnf("Timeout querying %s records '%s' after %v", dns.TypeToString[dns.TypeTXT], name, timeouts[i])
+				logrus.Warnf("Timeout querying %s records '%s' after %v", dns.TypeToString[qtype], name, timeouts[i])
 				continue
 			}
 			return nil, err
@@ -117,23 +117,60 @@ func ResolveWithTimeout(name, resolver string) (*dns.Msg, error) {
 	}
 }
 
+func LookupTxt(name, resolver string) ([]string, error) {
+	logrus.Infof("Using custom resolver %s for lookup of %s", resolver, name)
+	resp, err := ResolveWithTimeout(name, resolver, dns.TypeTXT, dns.ClassINET)
+	if err != nil {
+		logrus.Warnf("Failed to lookup %s: %v", name, err)
+		return nil, err
+	}
+	nsData := []string{}
+	data := []string{}
+
+	// Check if TXT records are present
+	for _, answer := range resp.Answer {
+		if txt, ok := answer.(*dns.TXT); ok {
+			logrus.Infof("Resolved TXT records for %s: %s", name, txt.Txt)
+			data = append(data, txt.Txt...)
+		}
+	}
+	if len(data) > 0 {
+		return data, nil
+	}
+	resp, err = ResolveWithTimeout(name, resolver, dns.TypeCNAME, dns.ClassINET)
+	if err != nil {
+		logrus.Warnf("Failed to lookup %s: %v", name, err)
+		return nil, err
+	}
+	// Check if CNAME records are present
+	for _, answer := range resp.Answer {
+		if cname, ok := answer.(*dns.CNAME); ok {
+			logrus.Infof("Resolved CNAME records for %s: %s", name, cname.Target)
+			// Get NS records for the CNAME
+			resp, err := ResolveWithTimeout(cname.Target, resolver, dns.TypeSOA, dns.ClassINET)
+			if err != nil {
+				logrus.Warnf("Failed to lookup %s: %v", cname.Target, err)
+				continue
+			}
+			for _, answer := range resp.Ns {
+				if ns, ok := answer.(*dns.SOA); ok {
+					logrus.Infof("Resolved NS records for %s: %s", cname.Target, ns.Ns)
+					nsData = append(nsData, ns.Ns)
+				}
+			}
+			for _, ns := range nsData {
+				logrus.Infof("Resolving %s using %s", cname.Target, ns)
+				return LookupTxt(cname.Target, ns)
+			}
+		}
+	}
+
+	return data, nil
+}
 func (c *client) LookupTxt(name string) ([]string, error) {
 	resolver := os.Getenv("DNS_RESOLVER")
 	if resolver != "" {
-		logrus.Infof("Using custom resolver %s for lookup of %s", resolver, name)
-		resp, err := ResolveWithTimeout(name, resolver)
-		if err != nil {
-			logrus.Warnf("Failed to lookup %s: %v", name, err)
-			return nil, err
-		}
-		data := []string{}
-		for _, answer := range resp.Answer {
-			if txt, ok := answer.(*dns.TXT); ok {
-				logrus.Infof("Resolved TXT records for %s: %s", name, txt.Txt)
-				data = append(data, txt.Txt...)
-			}
-		}
-		return data, nil
+		return LookupTxt(name, resolver)
 	}
 	return c.LookupTxt(name)
 }
