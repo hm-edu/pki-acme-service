@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/sirupsen/logrus"
 )
 
@@ -49,9 +50,8 @@ func MustClientFromContext(ctx context.Context) Client {
 }
 
 type client struct {
-	http     *http.Client
-	dialer   *net.Dialer
-	resolver *net.Resolver
+	http   *http.Client
+	dialer *net.Dialer
 }
 
 // NewClient returns an implementation of Client for verifying ACME challenges.
@@ -70,31 +70,69 @@ func NewClient() Client {
 		dialer: &net.Dialer{
 			Timeout: 30 * time.Second,
 		},
-		resolver: getResolver(),
 	}
-}
-
-func getResolver() *net.Resolver {
-	if os.Getenv("DNS_RESOLVER") != "" {
-		logrus.Infof("Using custom DNS resolver: %s", os.Getenv("DNS_RESOLVER"))
-		return &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				d := net.Dialer{
-					Timeout: time.Millisecond * time.Duration(10000),
-				}
-				return d.DialContext(ctx, network, fmt.Sprintf("%s:53", os.Getenv("DNS_RESOLVER")))
-			}}
-	}
-	return net.DefaultResolver
 }
 
 func (c *client) Get(url string) (*http.Response, error) {
 	return c.http.Get(url)
 }
 
+var timeouts [5]time.Duration = [5]time.Duration{(time.Second * 1), (time.Second * 1), (time.Second * 2), (time.Second * 4), (time.Second * 2)}
+
+func ResolveWithTimeout(name, resolver string) (*dns.Msg, error) {
+	client := new(dns.Client)
+	msg := &dns.Msg{
+		MsgHdr: dns.MsgHdr{
+			Id:               dns.Id(),
+			RecursionDesired: true,
+		},
+		Question: []dns.Question{{Name: dns.Fqdn(name), Qtype: dns.TypeTXT, Qclass: dns.ClassINET}},
+	}
+	msg.AuthenticatedData = true
+	msg.SetEdns0(4096, true)
+
+	for i := 0; i < len(timeouts); i++ {
+
+		client.Timeout = timeouts[i]
+		resp, _, err := client.Exchange(msg, fmt.Sprintf("%s:53", resolver))
+		if err == nil && resp.Truncated {
+			tcpConn, _ := dns.Dial("tcp", fmt.Sprintf("%s:53", resolver))
+			resp, _, err = client.ExchangeWithConn(msg, tcpConn)
+		}
+		if err != nil {
+			if err, ok := err.(net.Error); ok && err.Timeout() {
+				logrus.Warnf("Timeout querying %s records '%s' after %v", dns.TypeToString[dns.TypeTXT], name, timeouts[i])
+				continue
+			}
+			return nil, err
+		}
+
+		return resp, nil
+
+	}
+	return nil, &net.DNSError{
+		Name:      name,
+		Err:       "Final timeout.",
+		IsTimeout: true,
+	}
+}
+
 func (c *client) LookupTxt(name string) ([]string, error) {
-	return c.resolver.LookupTXT(context.Background(), name)
+	resolver := os.Getenv("DNS_RESOLVER")
+	if resolver != "" {
+		resp, err := ResolveWithTimeout(name, resolver)
+		if err != nil {
+			return nil, err
+		}
+		data := []string{}
+		for _, answer := range resp.Answer {
+			if txt, ok := answer.(*dns.TXT); ok {
+				data = append(data, txt.Txt...)
+			}
+		}
+		return data, nil
+	}
+	return c.LookupTxt(name)
 }
 
 func (c *client) TLSDial(network, addr string, config *tls.Config) (*tls.Conn, error) {
