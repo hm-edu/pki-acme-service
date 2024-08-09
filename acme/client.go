@@ -120,13 +120,16 @@ func ResolveWithTimeout(name, resolver string) (*dns.Msg, error) {
 func (c *client) LookupTxt(name string) ([]string, error) {
 	resolver := os.Getenv("DNS_RESOLVER")
 	if resolver != "" {
+		logrus.Infof("Using custom resolver %s for lookup of %s", resolver, name)
 		resp, err := ResolveWithTimeout(name, resolver)
 		if err != nil {
+			logrus.Warnf("Failed to lookup %s: %v", name, err)
 			return nil, err
 		}
 		data := []string{}
 		for _, answer := range resp.Answer {
 			if txt, ok := answer.(*dns.TXT); ok {
+				logrus.Infof("Resolved TXT records for %s: %s", name, txt.Txt)
 				data = append(data, txt.Txt...)
 			}
 		}
