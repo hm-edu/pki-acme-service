@@ -20,7 +20,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-tpm v0.9.1
 	github.com/google/uuid v1.6.0
-	github.com/googleapis/gax-go/v2 v2.13.0
+	github.com/googleapis/gax-go/v2 v2.14.0
 	github.com/hashicorp/vault/api v1.15.0
 	github.com/hashicorp/vault/api/auth/approle v0.8.0
 	github.com/hashicorp/vault/api/auth/aws v0.8.0
@@ -48,14 +48,14 @@ require (
 	golang.org/x/crypto v0.29.0
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f
 	golang.org/x/net v0.31.0
-	google.golang.org/api v0.205.0
+	google.golang.org/api v0.206.0
 	google.golang.org/grpc v1.68.0
 	google.golang.org/protobuf v1.35.1
 )
 
 require (
 	cloud.google.com/go v0.116.0 // indirect
-	cloud.google.com/go/auth v0.10.1 // indirect
+	cloud.google.com/go/auth v0.10.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.5 // indirect
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
 	cloud.google.com/go/iam v1.2.2 // indirect
@@ -116,7 +116,6 @@ require (
 	github.com/go-piv/piv-go/v2 v2.3.0 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
-	github.com/golang/glog v1.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
