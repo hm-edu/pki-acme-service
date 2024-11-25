@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/http"
@@ -17,18 +16,11 @@ import (
 	"time"
 
 	"github.com/coreos/go-systemd/v22/daemon"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/contrib/propagators/b3"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"go.opentelemetry.io/otel/sdk/resource"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/smallstep/cli-utils/step"
@@ -171,7 +163,6 @@ type CA struct {
 	opts        *options
 	renewer     *TLSRenewer
 	compactStop chan struct{}
-	tp          *sdktrace.TracerProvider
 }
 
 // New creates and initializes the CA with the given configuration and options.
@@ -187,31 +178,21 @@ func New(cfg *config.Config, opts ...Option) (*CA, error) {
 
 // Init initializes the CA with the given configuration.
 func (ca *CA) Init(cfg *config.Config) (*CA, error) {
-	var exporter sdktrace.SpanExporter
-	var err error
-	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") == "" {
-		exporter, err = stdout.New(stdout.WithWriter(io.Discard))
-	} else {
-		opts := []otlptracegrpc.Option{otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))}
-		client := otlptracegrpc.NewClient(opts...)
-		exporter, err = otlptrace.New(context.Background(), client)
+	dsn := os.Getenv("SENTRY_DSN")
+	if dsn != "" {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn: dsn,
+			// Set TracesSampleRate to 1.0 to capture 100%
+			// of transactions for performance monitoring.
+			// We recommend adjusting this value in production,
+			TracesSampleRate: 1.0,
+			EnableTracing:    true,
+		}); err != nil {
+			logrus.Info("Sentry initialization failed: %v", err)
+		} else {
+			logrus.Info("Sentry initialized")
+		}
 	}
-	if err != nil {
-		return nil, err
-	}
-	ca.tp = sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
-		sdktrace.WithBatcher(exporter),
-		sdktrace.WithResource(
-			resource.NewWithAttributes(
-				semconv.SchemaURL,
-				semconv.ServiceNameKey.String("certificates"),
-			)),
-	)
-	otel.SetTracerProvider(ca.tp)
-
-	otel.SetTextMapPropagator(b3.New())
-
 	// Set password, it's ok to set nil password, the ca will prompt for them if
 	// they are required.
 	opts := []authority.Option{
