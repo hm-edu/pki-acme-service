@@ -171,7 +171,6 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 
 	}
 
-	ctx = wrapSentryTrace(ctx)
 	certificates, err := s.sslServiceClient.IssueCertificate(ctx, &pb.IssueSslRequest{
 		Issuer:                  issuer,
 		SubjectAlternativeNames: sans,
@@ -203,7 +202,6 @@ func wrapSentryTrace(ctx context.Context) context.Context {
 }
 
 func (s *SectigoCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
-	ctx = wrapSentryTrace(ctx)
 	cert, chain, err := s.signCertificate(ctx, req.CSR)
 	if err != nil {
 		return nil, err
@@ -215,7 +213,6 @@ func (s *SectigoCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCer
 }
 
 func (s *SectigoCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
-	ctx = wrapSentryTrace(ctx)
 	cert, chain, err := s.signCertificate(ctx, req.CSR)
 	if err != nil {
 		return nil, err
