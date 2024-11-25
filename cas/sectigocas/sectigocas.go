@@ -63,6 +63,8 @@ func sentryInterceptor(ctx context.Context,
 			sentry.SentryBaggageHeader, span.ToBaggage(),
 		)
 	}
+
+	logrus.Infof("Starting span for method %s", method)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 	defer span.Finish()
 
@@ -84,7 +86,8 @@ func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 
 	conn, err := grpc.NewClient(
 		config.PKIBackend,
-		grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(sentryInterceptor),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(sentryInterceptor),
 	)
 	if err != nil {
 		return nil, err
@@ -92,7 +95,8 @@ func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 	sslServiceClient := pb.NewSSLServiceClient(conn)
 	conn, err = grpc.NewClient(
 		config.EABBackend,
-		grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(sentryInterceptor),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(sentryInterceptor),
 	)
 	if err != nil {
 		return nil, err
