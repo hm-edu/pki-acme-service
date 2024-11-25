@@ -34,6 +34,9 @@ func init() {
 
 const defaultClientOperationName = "grpc.client"
 
+type sentryTrace struct{}
+type sentryBaggage struct{}
+
 func sentryInterceptor(ctx context.Context,
 	method string,
 	req, reply interface{},
@@ -43,7 +46,6 @@ func sentryInterceptor(ctx context.Context,
 
 	hub := sentry.GetHubFromContext(ctx)
 	if hub == nil {
-		logrus.Warn("No Sentry hub found in context, creating new one")
 		hub = sentry.CurrentHub().Clone()
 		ctx = sentry.SetHubOnContext(ctx, hub)
 	}
@@ -64,7 +66,6 @@ func sentryInterceptor(ctx context.Context,
 		)
 	}
 
-	logrus.Infof("Starting span for method %s", method)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 	defer span.Finish()
 
@@ -160,6 +161,7 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 			if acc == nil {
 				return nil, nil, errors.New("No account passed!")
 			}
+			ctx := wrapSentryTrace(ctx)
 			user, err := s.eabClient.ResolveAccountId(ctx, &pb.ResolveAccountIdRequest{AccountId: acc.ID})
 			if err != nil {
 				return nil, nil, errors.WithMessage(err, "Error resolving user account!")
@@ -169,6 +171,7 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 
 	}
 
+	ctx = wrapSentryTrace(ctx)
 	certificates, err := s.sslServiceClient.IssueCertificate(ctx, &pb.IssueSslRequest{
 		Issuer:                  issuer,
 		SubjectAlternativeNames: sans,
@@ -187,7 +190,20 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 	return certs[0], certs[1:], nil
 }
 
+func wrapSentryTrace(ctx context.Context) context.Context {
+	hub := sentry.GetHubFromContext(ctx)
+	span := sentry.SpanFromContext(ctx)
+	ctx = context.Background()
+	ctx = sentry.SetHubOnContext(ctx, hub)
+	if span != nil {
+		ctx = context.WithValue(ctx, sentryTrace{}, span.ToSentryTrace())
+		ctx = context.WithValue(ctx, sentryBaggage{}, span.ToBaggage())
+	}
+	return ctx
+}
+
 func (s *SectigoCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
+	ctx = wrapSentryTrace(ctx)
 	cert, chain, err := s.signCertificate(ctx, req.CSR)
 	if err != nil {
 		return nil, err
@@ -199,6 +215,7 @@ func (s *SectigoCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCer
 }
 
 func (s *SectigoCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCertificateRequest) (*apiv1.RenewCertificateResponse, error) {
+	ctx = wrapSentryTrace(ctx)
 	cert, chain, err := s.signCertificate(ctx, req.CSR)
 	if err != nil {
 		return nil, err
@@ -210,6 +227,7 @@ func (s *SectigoCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCerti
 }
 
 func (s *SectigoCAS) RevokeCertificate(ctx context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
+	ctx = wrapSentryTrace(ctx)
 	_, err := s.sslServiceClient.RevokeCertificate(ctx, &pb.RevokeSslRequest{
 		Identifier: &pb.RevokeSslRequest_Serial{Serial: req.SerialNumber},
 		Reason:     req.Reason,
