@@ -161,8 +161,8 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 			if acc == nil {
 				return nil, nil, errors.New("No account passed!")
 			}
-			ctx := wrapSentryTrace(ctx)
-			user, err := s.eabClient.ResolveAccountId(ctx, &pb.ResolveAccountIdRequest{AccountId: acc.ID})
+			ctxResolve := wrapSentryTrace(ctx)
+			user, err := s.eabClient.ResolveAccountId(ctxResolve, &pb.ResolveAccountIdRequest{AccountId: acc.ID})
 			if err != nil {
 				return nil, nil, errors.WithMessage(err, "Error resolving user account!")
 			}
@@ -171,7 +171,8 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 
 	}
 
-	certificates, err := s.sslServiceClient.IssueCertificate(ctx, &pb.IssueSslRequest{
+	ctxSign := wrapSentryTrace(ctx)
+	certificates, err := s.sslServiceClient.IssueCertificate(ctxSign, &pb.IssueSslRequest{
 		Issuer:                  issuer,
 		SubjectAlternativeNames: sans,
 		Source:                  "ACME",
