@@ -52,8 +52,17 @@ func sentryInterceptor(ctx context.Context,
 
 	operationName := defaultClientOperationName
 
-	span := sentry.StartSpan(ctx, operationName, sentry.WithDescription(method))
+	trace, okTrace := ctx.Value(sentryTrace{}).(string)
+	baggage, okBaggage := ctx.Value(sentryBaggage{}).(string)
+
+	options := []sentry.SpanOption{sentry.WithDescription(method)}
+	if okTrace && okBaggage {
+		options = append(options, sentry.ContinueFromHeaders(trace, baggage))
+	}
+
+	span := sentry.StartSpan(ctx, operationName, options...)
 	span.SetData("grpc.request.method", method)
+
 	ctx = span.Context()
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if ok {
