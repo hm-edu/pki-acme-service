@@ -55,7 +55,7 @@ func sentryInterceptor(ctx context.Context,
 	trace, okTrace := ctx.Value(sentryTrace{}).(string)
 	baggage, okBaggage := ctx.Value(sentryBaggage{}).(string)
 
-	options := []sentry.SpanOption{sentry.WithDescription(method)}
+	options := []sentry.SpanOption{sentry.WithTransactionName(method), sentry.WithDescription(method)}
 	if okTrace && okBaggage {
 		options = append(options, sentry.ContinueFromHeaders(trace, baggage))
 	}
