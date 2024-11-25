@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"fmt"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/acme/api"
 	"github.com/smallstep/certificates/authority/provisioner"
@@ -17,6 +18,7 @@ import (
 	"github.com/smallstep/certificates/cas/apiv1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 type Options struct {
@@ -30,6 +32,48 @@ func init() {
 	})
 }
 
+const defaultClientOperationName = "grpc.client"
+
+func sentryInterceptor(ctx context.Context,
+	method string,
+	req, reply interface{},
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	callOpts ...grpc.CallOption) error {
+
+	hub := sentry.GetHubFromContext(ctx)
+	if hub == nil {
+		hub = sentry.CurrentHub().Clone()
+		ctx = sentry.SetHubOnContext(ctx, hub)
+	}
+
+	operationName := defaultClientOperationName
+
+	span := sentry.StartSpan(ctx, operationName, sentry.WithDescription(method))
+	span.SetData("grpc.request.method", method)
+	ctx = span.Context()
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if ok {
+		md.Append(sentry.SentryTraceHeader, span.ToSentryTrace())
+		md.Append(sentry.SentryBaggageHeader, span.ToBaggage())
+	} else {
+		md = metadata.Pairs(
+			sentry.SentryTraceHeader, span.ToSentryTrace(),
+			sentry.SentryBaggageHeader, span.ToBaggage(),
+		)
+	}
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	defer span.Finish()
+
+	err := invoker(ctx, method, req, reply, cc, callOpts...)
+
+	if err != nil {
+		hub.CaptureException(err)
+	}
+
+	return err
+}
+
 func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 	var config Options
 	err := json.Unmarshal(opts.Config, &config)
@@ -40,6 +84,7 @@ func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 	conn, err := grpc.NewClient(
 		config.PKIBackend,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()), grpc.WithUnaryInterceptor(sentryInterceptor),
 	)
 	if err != nil {
 		return nil, err
@@ -48,6 +93,7 @@ func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 	conn, err = grpc.NewClient(
 		config.EABBackend,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()), grpc.WithUnaryInterceptor(sentryInterceptor),
 	)
 	if err != nil {
 		return nil, err
