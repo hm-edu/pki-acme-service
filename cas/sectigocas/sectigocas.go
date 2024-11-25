@@ -158,7 +158,7 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 			if acc == nil {
 				return nil, nil, errors.New("No account passed!")
 			}
-			user, err := s.eabClient.ResolveAccountId(context.Background(), &pb.ResolveAccountIdRequest{AccountId: acc.ID})
+			user, err := s.eabClient.ResolveAccountId(ctx, &pb.ResolveAccountIdRequest{AccountId: acc.ID})
 			if err != nil {
 				return nil, nil, errors.WithMessage(err, "Error resolving user account!")
 			}
@@ -167,7 +167,7 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 
 	}
 
-	certificates, err := s.sslServiceClient.IssueCertificate(context.Background(), &pb.IssueSslRequest{
+	certificates, err := s.sslServiceClient.IssueCertificate(ctx, &pb.IssueSslRequest{
 		Issuer:                  issuer,
 		SubjectAlternativeNames: sans,
 		Source:                  "ACME",
@@ -208,7 +208,7 @@ func (s *SectigoCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCerti
 }
 
 func (s *SectigoCAS) RevokeCertificate(ctx context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
-	_, err := s.sslServiceClient.RevokeCertificate(context.Background(), &pb.RevokeSslRequest{
+	_, err := s.sslServiceClient.RevokeCertificate(ctx, &pb.RevokeSslRequest{
 		Identifier: &pb.RevokeSslRequest_Serial{Serial: req.SerialNumber},
 		Reason:     req.Reason,
 	})
