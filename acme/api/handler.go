@@ -170,6 +170,15 @@ func route(r api.Router, middleware func(next nextHTTP) nextHTTP) {
 					transaction.SetData("http.response.size", rl.Size())
 					transaction.Status = sentry.HTTPtoSpanStatus(rl.StatusCode())
 					transaction.SetData("http.response.status_code", rl.StatusCode())
+					if fields := rl.Fields(); fields != nil {
+						if v, ok := fields["error"]; ok {
+							if err, ok := v.(error); ok {
+								hub.CaptureException(err)
+							} else if err, ok := v.(string); ok {
+								hub.AddBreadcrumb(&sentry.Breadcrumb{Level: sentry.LevelError, Message: err}, nil)
+							}
+						}
+					}
 				}
 				transaction.Finish()
 			}()
