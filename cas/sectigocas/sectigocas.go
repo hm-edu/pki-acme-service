@@ -44,6 +44,7 @@ func sentryInterceptor(ctx context.Context,
 
 	hub := sentry.GetHubFromContext(ctx)
 	if hub == nil {
+		logrus.Warn("No Sentry hub found in context, creating new one")
 		hub = sentry.CurrentHub().Clone()
 		ctx = sentry.SetHubOnContext(ctx, hub)
 	}
