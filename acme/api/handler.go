@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 
 	pb "github.com/hm-edu/portal-apis"
 	"github.com/smallstep/certificates/cas/sectigocas/eab"
+	"github.com/smallstep/certificates/logging"
 
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/api"
@@ -138,8 +140,47 @@ func route(r api.Router, middleware func(next nextHTTP) nextHTTP) {
 		}
 		return handler
 	}
+	sentryMiddleware := func(next nextHTTP) nextHTTP {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			hub := sentry.GetHubFromContext(ctx)
+			if hub == nil {
+				hub = sentry.CurrentHub().Clone()
+				ctx = sentry.SetHubOnContext(ctx, hub)
+			}
+
+			transactionName := r.URL.Path
+			transactionSource := sentry.SourceURL
+			options := []sentry.SpanOption{
+				sentry.ContinueTrace(hub, r.Header.Get(sentry.SentryTraceHeader), r.Header.Get(sentry.SentryBaggageHeader)),
+				sentry.WithOpName("http.server"),
+				sentry.WithTransactionSource(transactionSource),
+				sentry.WithSpanOrigin(sentry.SpanOriginEcho),
+			}
+
+			transaction := sentry.StartTransaction(
+				ctx,
+				fmt.Sprintf("%s %s", r.Method, transactionName),
+				options...,
+			)
+
+			transaction.SetData("http.request.method", r.Method)
+			defer func() {
+				if rl, ok := w.(logging.ResponseLogger); ok {
+					transaction.SetData("http.response.size", rl.Size())
+					transaction.Status = sentry.HTTPtoSpanStatus(rl.StatusCode())
+					transaction.SetData("http.response.status_code", rl.StatusCode())
+				}
+				transaction.Finish()
+			}()
+			hub.Scope().SetRequest(r)
+			ctx = transaction.Context()
+			r = r.WithContext(ctx)
+			next(w, r)
+		}
+	}
 	validatingMiddleware := func(next nextHTTP) nextHTTP {
-		return commonMiddleware(addNonce(addDirLink(verifyContentType(parseJWS(validateJWS(next))))))
+		return sentryMiddleware(commonMiddleware(addNonce(addDirLink(verifyContentType(parseJWS(validateJWS(next)))))))
 	}
 	extractPayloadByJWK := func(next nextHTTP) nextHTTP {
 		return validatingMiddleware(extractJWK(verifyAndExtractJWSPayload(next)))
@@ -155,13 +196,13 @@ func route(r api.Router, middleware func(next nextHTTP) nextHTTP) {
 
 	// Standard ACME API
 	r.MethodFunc("GET", getPath(acme.NewNonceLinkType, "{provisionerID}"),
-		commonMiddleware(addNonce(addDirLink(GetNonce))))
+		sentryMiddleware(commonMiddleware(addNonce(addDirLink(GetNonce)))))
 	r.MethodFunc("HEAD", getPath(acme.NewNonceLinkType, "{provisionerID}"),
-		commonMiddleware(addNonce(addDirLink(GetNonce))))
+		sentryMiddleware(commonMiddleware(addNonce(addDirLink(GetNonce)))))
 	r.MethodFunc("GET", getPath(acme.DirectoryLinkType, "{provisionerID}"),
-		commonMiddleware(GetDirectory))
+		sentryMiddleware(commonMiddleware(GetDirectory)))
 	r.MethodFunc("HEAD", getPath(acme.DirectoryLinkType, "{provisionerID}"),
-		commonMiddleware(GetDirectory))
+		sentryMiddleware(commonMiddleware(GetDirectory)))
 
 	r.MethodFunc("POST", getPath(acme.NewAccountLinkType, "{provisionerID}"),
 		extractPayloadByJWK(NewAccount))
