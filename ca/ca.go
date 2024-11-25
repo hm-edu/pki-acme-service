@@ -189,7 +189,7 @@ func (ca *CA) Init(cfg *config.Config) (*CA, error) {
 			TracesSampleRate: 1.0,
 			EnableTracing:    true,
 		}); err != nil {
-			logrus.Info("Sentry initialization failed: %v", err)
+			logrus.Infof("Sentry initialization failed: %v", err)
 		} else {
 			logrus.Info("Sentry initialized")
 		}
