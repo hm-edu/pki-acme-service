@@ -11,6 +11,7 @@ import (
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/acme/api"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/monitoring"
 
 	pb "github.com/hm-edu/portal-apis"
 	"github.com/pkg/errors"
@@ -34,9 +35,6 @@ func init() {
 
 const defaultClientOperationName = "grpc.client"
 
-type sentryTrace struct{}
-type sentryBaggage struct{}
-
 func sentryInterceptor(ctx context.Context,
 	method string,
 	req, reply interface{},
@@ -52,13 +50,9 @@ func sentryInterceptor(ctx context.Context,
 
 	operationName := defaultClientOperationName
 
-	trace, okTrace := ctx.Value(sentryTrace{}).(string)
-	baggage, okBaggage := ctx.Value(sentryBaggage{}).(string)
-
 	options := []sentry.SpanOption{sentry.WithTransactionName(method), sentry.WithDescription(method)}
-	if okTrace && okBaggage {
-		options = append(options, sentry.ContinueFromHeaders(trace, baggage))
-	}
+
+	options = append(options, monitoring.GetSpanOptions(ctx)...)
 
 	span := sentry.StartSpan(ctx, operationName, options...)
 	span.SetData("grpc.request.method", method)
@@ -170,17 +164,20 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 			if acc == nil {
 				return nil, nil, errors.New("No account passed!")
 			}
-			ctxResolve := wrapSentryTrace(ctx)
+			ctxResolve, hub := monitoring.WrapSentryTrace(ctx)
 			user, err := s.eabClient.ResolveAccountId(ctxResolve, &pb.ResolveAccountIdRequest{AccountId: acc.ID})
 			if err != nil {
 				return nil, nil, errors.WithMessage(err, "Error resolving user account!")
 			}
 			issuer = fmt.Sprintf("%v (EAB: %v)", user.User, user.EabKey)
+			hub.ConfigureScope(func(scope *sentry.Scope) {
+				scope.SetUser(sentry.User{Email: issuer})
+			})
 		}
 
 	}
 
-	ctxSign := wrapSentryTrace(ctx)
+	ctxSign, _ := monitoring.WrapSentryTrace(ctx)
 	certificates, err := s.sslServiceClient.IssueCertificate(ctxSign, &pb.IssueSslRequest{
 		Issuer:                  issuer,
 		SubjectAlternativeNames: sans,
@@ -197,18 +194,6 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 		return nil, nil, err
 	}
 	return certs[0], certs[1:], nil
-}
-
-func wrapSentryTrace(ctx context.Context) context.Context {
-	hub := sentry.GetHubFromContext(ctx)
-	span := sentry.SpanFromContext(ctx)
-	ctx = context.Background()
-	ctx = sentry.SetHubOnContext(ctx, hub)
-	if span != nil {
-		ctx = context.WithValue(ctx, sentryTrace{}, span.ToSentryTrace())
-		ctx = context.WithValue(ctx, sentryBaggage{}, span.ToBaggage())
-	}
-	return ctx
 }
 
 func (s *SectigoCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
@@ -234,7 +219,7 @@ func (s *SectigoCAS) RenewCertificate(ctx context.Context, req *apiv1.RenewCerti
 }
 
 func (s *SectigoCAS) RevokeCertificate(ctx context.Context, req *apiv1.RevokeCertificateRequest) (*apiv1.RevokeCertificateResponse, error) {
-	ctx = wrapSentryTrace(ctx)
+	ctx, _ = monitoring.WrapSentryTrace(ctx)
 	_, err := s.sslServiceClient.RevokeCertificate(ctx, &pb.RevokeSslRequest{
 		Identifier: &pb.RevokeSslRequest_Serial{Serial: req.SerialNumber},
 		Reason:     req.Reason,
