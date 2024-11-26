@@ -17,6 +17,7 @@ import (
 	pb "github.com/hm-edu/portal-apis"
 	"github.com/smallstep/certificates/cas/sectigocas/eab"
 	"github.com/smallstep/certificates/logging"
+	"github.com/smallstep/certificates/monitoring"
 
 	"github.com/smallstep/certificates/acme"
 	"github.com/smallstep/certificates/api"
@@ -467,6 +468,8 @@ func checkPermission(ctx context.Context, identifiers []acme.Identifier, eak *ac
 	if !ok {
 		return nil, errors.New("no external account client available")
 	}
+
+	ctx, _ = monitoring.WrapSentryTrace(ctx)
 	result, err := client.CheckEABPermissions(ctx, &pb.CheckEABPermissionRequest{Domains: domains, EabKey: eak.ID})
 	if err != nil {
 		return nil, err
