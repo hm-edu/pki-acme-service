@@ -1680,8 +1680,17 @@ func storeError(ctx context.Context, db DB, ch *Challenge, markInvalid bool, err
 		logrus.Warnf("marking challenge %s as invalid: %v", ch.ID, err)
 		ch.Status = StatusInvalid
 	}
-	if err := db.UpdateChallenge(ctx, ch); err != nil {
-		return WrapErrorISE(err, "failure saving error to acme challenge")
+	for {
+		if err := db.UpdateChallenge(ctx, ch); err != nil {
+			if strings.Contains(err.Error(), "changed since last read") {
+				// If the challenge has changed since we read it, then we
+				// don't want to overwrite the error.
+				logrus.Warn("challenge changed since last read -> retry saving")
+				continue
+			}
+			return WrapErrorISE(err, "failure saving error to acme challenge")
+		}
+		break
 	}
 	return nil
 }
