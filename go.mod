@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/longrunning v0.6.7
 	cloud.google.com/go/security v1.18.5
 	github.com/Masterminds/sprig/v3 v3.3.0
+	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
 	github.com/ccoveille/go-safecast v1.6.1
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/dgraph-io/badger v1.6.2
@@ -22,6 +23,9 @@ require (
 	github.com/hashicorp/vault/api/auth/approle v0.10.0
 	github.com/hashicorp/vault/api/auth/aws v0.10.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.10.0
+	github.com/hm-edu/portal-apis v0.0.0-20250102083103-f7750f2a7776
+	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/newrelic/go-agent/v3 v3.39.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.22.0
@@ -34,7 +38,7 @@ require (
 	github.com/smallstep/linkedca v0.23.0
 	github.com/smallstep/nosql v0.7.0
 	github.com/smallstep/pkcs7 v0.2.1
-	github.com/smallstep/scep v0.0.0-20240926084937-8cf1ca453101
+	github.com/smallstep/scep v0.0.0-20250318231241-a25cabb69492
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli v1.22.17
 	go.step.sm/cli-utils v0.9.0
@@ -49,6 +53,8 @@ require (
 	google.golang.org/protobuf v1.36.6
 )
 
+require github.com/getsentry/sentry-go v0.31.1
+
 require (
 	cloud.google.com/go v0.120.0 // indirect
 	cloud.google.com/go/auth v0.16.2 // indirect
@@ -62,10 +68,6 @@ require (
 	go.opentelemetry.io/otel v1.36.0 // indirect
 )
 
-require github.com/hm-edu/portal-apis v0.0.0-20250102083103-f7750f2a7776
-
-require github.com/getsentry/sentry-go v0.29.1
-
 require (
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0 // indirect
@@ -75,9 +77,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.3.0 // indirect
-	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
-	github.com/aws/aws-sdk-go v1.55.5 // indirect
+	github.com/Masterminds/semver/v3 v3.3.1 // indirect
+	github.com/aws/aws-sdk-go v1.55.6 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.36.4 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.29.16 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.69 // indirect
@@ -91,7 +92,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.25.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.21 // indirect
-	github.com/aws/smithy-go v1.22.2 // indirect
+	github.com/aws/smithy-go v1.22.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -107,12 +108,12 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-piv/piv-go/v2 v2.3.0 // indirect
-	github.com/go-sql-driver/mysql v1.8.1 // indirect
+	github.com/go-sql-driver/mysql v1.9.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/certificate-transparency-go v1.2.2 // indirect
+	github.com/google/certificate-transparency-go v1.3.1 // indirect
 	github.com/google/go-tpm-tools v0.4.5 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
@@ -124,7 +125,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.3.0 // indirect
-	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.8 // indirect
+	github.com/hashicorp/go-secure-stdlib/parseutil v0.2.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
@@ -142,8 +143,6 @@ require (
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -155,17 +154,17 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.62.0 // indirect
-	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/prometheus/common v0.63.0 // indirect
+	github.com/prometheus/procfs v0.16.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/spf13/cast v1.7.0 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.etcd.io/bbolt v1.3.11 // indirect
+	go.etcd.io/bbolt v1.4.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
 	go.opentelemetry.io/otel/metric v1.36.0 // indirect
@@ -188,5 +187,5 @@ replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.202405061
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/miekg/dns v1.1.61
+	github.com/miekg/dns v1.1.64
 )
