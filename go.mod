@@ -67,7 +67,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.32.0 // indirect
 )
 
-require github.com/getsentry/sentry-go v0.30.0
+require github.com/getsentry/sentry-go v0.31.1
 
 require (
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
