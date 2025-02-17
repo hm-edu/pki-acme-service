@@ -36,7 +36,7 @@ require (
 	github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935
 	github.com/smallstep/linkedca v0.23.0
 	github.com/smallstep/nosql v0.7.0
-	github.com/smallstep/pkcs7 v0.2.0
+	github.com/smallstep/pkcs7 v0.2.1
 	github.com/smallstep/scep v0.0.0-20241223071629-a37a330173bc
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli v1.22.16
@@ -108,7 +108,6 @@ require (
 	github.com/go-piv/piv-go/v2 v2.3.0 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
-	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
