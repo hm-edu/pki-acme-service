@@ -44,7 +44,7 @@ require (
 	go.step.sm/cli-utils v0.9.0
 	go.step.sm/crypto v0.58.0
 	go.uber.org/mock v0.5.0
-	golang.org/x/crypto v0.34.0
+	golang.org/x/crypto v0.35.0
 	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac
 	golang.org/x/net v0.35.0
 	google.golang.org/api v0.222.0
