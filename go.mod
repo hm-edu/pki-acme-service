@@ -14,7 +14,7 @@ require (
 	github.com/dgraph-io/ristretto v0.2.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/go-chi/chi/v5 v5.2.1
-	github.com/go-jose/go-jose/v3 v3.0.3
+	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-tpm v0.9.3
 	github.com/google/uuid v1.6.0
@@ -42,7 +42,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli v1.22.16
 	go.step.sm/cli-utils v0.9.0
-	go.step.sm/crypto v0.58.0
+	go.step.sm/crypto v0.59.0
 	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.34.0
 	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac
