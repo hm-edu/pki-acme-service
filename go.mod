@@ -1,6 +1,6 @@
 module github.com/smallstep/certificates
 
-go 1.24.0
+go 1.24.2
 
 require (
 	cloud.google.com/go/longrunning v0.8.0
@@ -53,7 +53,7 @@ require (
 	google.golang.org/protobuf v1.36.11
 )
 
-require github.com/getsentry/sentry-go v0.31.1
+require github.com/getsentry/sentry-go v0.33.0
 
 require (
 	cloud.google.com/go v0.123.0 // indirect
@@ -62,7 +62,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/iam v1.5.3 // indirect
 	cloud.google.com/go/kms v1.25.0 // indirect
-	dario.cat/mergo v1.0.1 // indirect
+	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0 // indirect
 	go.opentelemetry.io/otel v1.39.0 // indirect
@@ -109,7 +109,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-piv/piv-go/v2 v2.4.0 // indirect
-	github.com/go-sql-driver/mysql v1.9.1 // indirect
+	github.com/go-sql-driver/mysql v1.9.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
@@ -162,7 +162,7 @@ require (
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/spf13/cast v1.7.1 // indirect
+	github.com/spf13/cast v1.8.0 // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
@@ -191,5 +191,5 @@ replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.202405061
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/miekg/dns v1.1.64
+	github.com/miekg/dns v1.1.66
 )
