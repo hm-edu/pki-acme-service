@@ -1,6 +1,8 @@
 module github.com/smallstep/certificates
 
-go 1.23.7
+go 1.24
+
+toolchain go1.24.2
 
 require (
 	cloud.google.com/go/longrunning v0.6.7
@@ -45,7 +47,7 @@ require (
 	go.step.sm/crypto v0.67.0
 	go.uber.org/mock v0.5.2
 	golang.org/x/crypto v0.39.0
-	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
+	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 	golang.org/x/net v0.41.0
 	golang.org/x/sync v0.15.0
 	google.golang.org/api v0.240.0
@@ -53,16 +55,16 @@ require (
 	google.golang.org/protobuf v1.36.6
 )
 
-require github.com/getsentry/sentry-go v0.31.1
+require github.com/getsentry/sentry-go v0.33.0
 
 require (
-	cloud.google.com/go v0.120.0 // indirect
+	cloud.google.com/go v0.121.2 // indirect
 	cloud.google.com/go/auth v0.16.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.7.0 // indirect
 	cloud.google.com/go/iam v1.5.2 // indirect
 	cloud.google.com/go/kms v1.22.0 // indirect
-	dario.cat/mergo v1.0.1 // indirect
+	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0 // indirect
 	go.opentelemetry.io/otel v1.36.0 // indirect
@@ -78,7 +80,7 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.1 // indirect
-	github.com/aws/aws-sdk-go v1.55.6 // indirect
+	github.com/aws/aws-sdk-go v1.55.7 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.36.4 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.29.16 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.69 // indirect
@@ -104,11 +106,11 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-piv/piv-go/v2 v2.3.0 // indirect
-	github.com/go-sql-driver/mysql v1.9.1 // indirect
+	github.com/go-sql-driver/mysql v1.9.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
@@ -153,15 +155,15 @@ require (
 	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.63.0 // indirect
-	github.com/prometheus/procfs v0.16.0 // indirect
+	github.com/prometheus/client_model v0.6.2 // indirect
+	github.com/prometheus/common v0.64.0 // indirect
+	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/spf13/cast v1.7.1 // indirect
+	github.com/spf13/cast v1.8.0 // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
@@ -175,8 +177,8 @@ require (
 	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
-	google.golang.org/genproto v0.0.0-20250505200425-f936aa4a68b2 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250505200425-f936aa4a68b2 // indirect
+	google.golang.org/genproto v0.0.0-20250519155744-55703ea1f237 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250519155744-55703ea1f237 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -187,5 +189,5 @@ replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.202405061
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/miekg/dns v1.1.64
+	github.com/miekg/dns v1.1.66
 )
