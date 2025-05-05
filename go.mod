@@ -53,7 +53,7 @@ require (
 	google.golang.org/protobuf v1.36.12
 )
 
-require github.com/getsentry/sentry-go v0.31.1
+require github.com/getsentry/sentry-go v0.33.0
 
 require (
 	cloud.google.com/go v0.123.0 // indirect
@@ -162,7 +162,7 @@ require (
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/spf13/cast v1.7.1 // indirect
+	github.com/spf13/cast v1.8.0 // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.etcd.io/bbolt v1.4.3 // indirect

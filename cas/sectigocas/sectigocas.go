@@ -97,16 +97,18 @@ func New(ctx context.Context, opts apiv1.Options) (*SectigoCAS, error) {
 		return nil, err
 	}
 	sslServiceClient := pb.NewSSLServiceClient(conn)
-	conn, err = grpc.NewClient(
-		config.EABBackend,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(sentryInterceptor),
-	)
-	if err != nil {
-		return nil, err
+	var eabClient pb.EABServiceClient
+	if config.EABBackend != "" {
+		conn, err = grpc.NewClient(
+			config.EABBackend,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(sentryInterceptor),
+		)
+		if err != nil {
+			return nil, err
+		}
+		eabClient = pb.NewEABServiceClient(conn)
 	}
-	eabClient := pb.NewEABServiceClient(conn)
-
 	return &SectigoCAS{sslServiceClient: sslServiceClient, eabClient: eabClient, logger: logrus.StandardLogger()}, nil
 }
 
