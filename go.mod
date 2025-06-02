@@ -36,7 +36,7 @@ require (
 	github.com/slackhq/nebula v1.9.5
 	github.com/smallstep/assert v0.0.0-20200723003110-82e2b9b3b262
 	github.com/smallstep/cli-utils v0.12.1
-	github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935
+	github.com/smallstep/go-attestation v0.4.4-0.20241119153605-2306d5b464ca
 	github.com/smallstep/linkedca v0.23.0
 	github.com/smallstep/nosql v0.7.0
 	github.com/smallstep/pkcs7 v0.2.1
@@ -44,13 +44,13 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli v1.22.16
 	go.step.sm/cli-utils v0.9.0
-	go.step.sm/crypto v0.64.0
+	go.step.sm/crypto v0.66.0
 	go.uber.org/mock v0.5.2
 	golang.org/x/crypto v0.38.0
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 	golang.org/x/net v0.40.0
 	google.golang.org/api v0.234.0
-	google.golang.org/grpc v1.72.1
+	google.golang.org/grpc v1.72.2
 	google.golang.org/protobuf v1.36.6
 )
 
