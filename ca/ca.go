@@ -22,10 +22,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/sirupsen/logrus"
-
-	"github.com/pkg/errors"
-
 	"github.com/smallstep/cli-utils/step"
 	"github.com/smallstep/nosql"
 	"go.step.sm/crypto/x509util"
