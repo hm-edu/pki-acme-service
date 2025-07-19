@@ -312,10 +312,10 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 		if err != nil {
 			logrus.WithError(err).Error("error signing certificate")
 			o.Status = StatusInvalid
-			ch <- WrapErrorISE(err, "error signing certificate for order %s", o.ID)
 			if err = db.UpdateOrder(ctx, o); err != nil {
 				logrus.WithError(err).Error("error updating order")
 			}
+			ch <- WrapErrorISE(err, "error signing certificate for order %s", o.ID)
 			return
 		}
 
@@ -328,10 +328,10 @@ func (o *Order) Finalize(ctx context.Context, db DB, csr *x509.CertificateReques
 		if err := db.CreateCertificate(ctx, cert); err != nil {
 			logrus.WithError(err).Error("error creating certificate")
 			o.Status = StatusInvalid
-			ch <- WrapErrorISE(err, "error creating certificate for order %s", o.ID)
 			if err = db.UpdateOrder(ctx, o); err != nil {
 				logrus.WithError(err).Error("error updating order")
 			}
+			ch <- WrapErrorISE(err, "error creating certificate for order %s", o.ID)
 			return
 		}
 		o.CertificateID = cert.ID
