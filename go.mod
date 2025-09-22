@@ -186,7 +186,7 @@ require (
 replace github.com/smallstep/nosql => github.com/hm-edu/nosql v0.4.1-0.20240506195746-2ea82a22279f
 
 require (
-	github.com/eclipse/paho.mqtt.golang v1.5.0
+	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/miekg/dns v1.1.66
 )
