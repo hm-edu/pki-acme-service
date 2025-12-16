@@ -8,6 +8,7 @@ RUN PKG=github.com/smallstep/certificates/cmd/step-agent BINNAME=step-agent make
 RUN setcap CAP_NET_BIND_SERVICE=+eip bin/step-agent
 
 FROM smallstep/step-cli:latest
+USER root
 RUN apk --no-cache add ca-certificates  && update-ca-certificates
 COPY --from=builder /src/bin/step-agent /usr/local/bin/step-agent
 
