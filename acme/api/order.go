@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/pkg/errors"
 
 	"go.step.sm/crypto/randutil"
 	"go.step.sm/crypto/x509util"
@@ -21,6 +22,7 @@ import (
 	"github.com/smallstep/certificates/api/render"
 	"github.com/smallstep/certificates/authority/policy"
 	"github.com/smallstep/certificates/authority/provisioner"
+	"github.com/smallstep/certificates/logging"
 )
 
 // NewOrderRequest represents the body for a NewOrder request.
@@ -171,28 +173,37 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 
 	acc, err := accountFromContext(ctx)
 	if err != nil {
+		logNewOrderError(w, "accountFromContext", err, nil, nil, nil, nil)
 		render.Error(w, r, err)
 		return
 	}
+
 	prov, err := provisionerFromContext(ctx)
 	if err != nil {
+		logNewOrderError(w, "provisionerFromContext", err, acc, nil, nil, nil)
 		render.Error(w, r, err)
 		return
 	}
+
 	payload, err := payloadFromContext(ctx)
 	if err != nil {
+		logNewOrderError(w, "payloadFromContext", err, acc, prov, nil, nil)
 		render.Error(w, r, err)
 		return
 	}
 
 	var nor NewOrderRequest
 	if err := json.Unmarshal(payload.value, &nor); err != nil {
+		logNewOrderError(w, "unmarshalPayload", err, acc, prov, nil, map[string]interface{}{
+			"new-order-payload-bytes": len(payload.value),
+		})
 		render.Error(w, r, acme.WrapError(acme.ErrorMalformedType, err,
 			"failed to unmarshal new-order request payload"))
 		return
 	}
 
 	if err := nor.Validate(); err != nil {
+		logNewOrderError(w, "validateRequest", err, acc, prov, &nor, nil)
 		render.Error(w, r, err)
 		return
 	}
@@ -202,6 +213,7 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 
 	acmeProv, err := acmeProvisionerFromContext(ctx)
 	if err != nil {
+		logNewOrderError(w, "acmeProvisionerFromContext", err, acc, prov, &nor, nil)
 		render.Error(w, r, err)
 		return
 	}
@@ -209,6 +221,9 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 	var eak *acme.ExternalAccountKey
 	if acmeProv.RequireEAB {
 		if eak, err = db.GetExternalAccountKeyByAccountID(ctx, prov.GetID(), acc.ID); err != nil {
+			logNewOrderError(w, "getExternalAccountKey", err, acc, acmeProv, &nor, map[string]interface{}{
+				"new-order-eab-required": true,
+			})
 			render.Error(w, r, acme.NewError(acme.ErrorEabAccountBindingDoesNotExistType, "error retrieving external account binding key"))
 			return
 		}
@@ -216,6 +231,7 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 
 	acmePolicy, err := newACMEPolicyEngine(eak)
 	if err != nil {
+		logNewOrderError(w, "newACMEPolicyEngine", err, acc, acmeProv, &nor, externalAccountKeyLogFields(eak))
 		render.Error(w, r, acme.WrapErrorISE(err, "error creating ACME policy engine"))
 		return
 	}
@@ -223,17 +239,26 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 	for _, identifier := range nor.Identifiers {
 		// evaluate the ACME account level policy
 		if err = isIdentifierAllowed(acmePolicy, identifier); err != nil {
+			logNewOrderError(w, "accountPolicy", err, acc, acmeProv, &nor, map[string]interface{}{
+				"new-order-identifier": identifierForLog(identifier),
+			})
 			render.Error(w, r, acme.WrapError(acme.ErrorRejectedIdentifierType, err, "not authorized"))
 			return
 		}
 		// evaluate the provisioner level policy
 		orderIdentifier := provisioner.ACMEIdentifier{Type: provisioner.ACMEIdentifierType(identifier.Type), Value: identifier.Value}
 		if err = prov.AuthorizeOrderIdentifier(ctx, orderIdentifier); err != nil {
+			logNewOrderError(w, "provisionerPolicy", err, acc, acmeProv, &nor, map[string]interface{}{
+				"new-order-identifier": identifierForLog(identifier),
+			})
 			render.Error(w, r, acme.WrapError(acme.ErrorRejectedIdentifierType, err, "not authorized"))
 			return
 		}
 		// evaluate the authority level policy
 		if err = ca.AreSANsAllowed(ctx, []string{identifier.Value}); err != nil {
+			logNewOrderError(w, "authorityPolicy", err, acc, acmeProv, &nor, map[string]interface{}{
+				"new-order-identifier": identifierForLog(identifier),
+			})
 			render.Error(w, r, acme.WrapError(acme.ErrorRejectedIdentifierType, err, "not authorized"))
 			return
 		}
@@ -255,9 +280,17 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 	if acmeProv.RequireEAB {
 		if missing, err := checkPermission(ctx, o.Identifiers, eak); len(missing) != 0 || err != nil {
 			if err != nil {
+				fields := externalAccountKeyLogFields(eak)
+				fields["new-order-eab-required"] = true
+				fields["new-order-internal-error"] = err.Error()
+				logNewOrderError(w, "checkExternalAccountKeyPermission", err, acc, acmeProv, &nor, fields)
 				render.Error(w, r, acme.NewError(acme.ErrorServerInternalType, "Internal server error"))
 				return
 			}
+			fields := externalAccountKeyLogFields(eak)
+			fields["new-order-eab-required"] = true
+			fields["new-order-missing-domains"] = missing
+			logNewOrderError(w, "checkExternalAccountKeyPermission", nil, acc, acmeProv, &nor, fields)
 			render.Error(w, r, acme.NewError(acme.ErrorRejectedIdentifierType, "Missing registration for domain(s) %v", missing))
 			return
 		}
@@ -271,6 +304,9 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 			Status:     acme.StatusPending,
 		}
 		if err := newAuthorization(ctx, az); err != nil {
+			logNewOrderError(w, "newAuthorization", err, acc, acmeProv, &nor, map[string]interface{}{
+				"new-order-identifier": identifierForLog(identifier),
+			})
 			render.Error(w, r, err)
 			return
 		}
@@ -295,6 +331,9 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := db.CreateOrder(ctx, o); err != nil {
+		logNewOrderError(w, "createOrder", err, acc, acmeProv, &nor, map[string]interface{}{
+			"new-order-authorization-ids": o.AuthorizationIDs,
+		})
 		render.Error(w, r, acme.WrapErrorISE(err, "error creating order"))
 		return
 	}
@@ -303,6 +342,67 @@ func NewOrder(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Location", linker.GetLink(ctx, acme.OrderLinkType, o.ID))
 	render.JSONStatus(w, r, o, http.StatusCreated)
+}
+
+func logNewOrderError(w http.ResponseWriter, stage string, err error, acc *acme.Account, prov acme.Provisioner, nor *NewOrderRequest, fields map[string]interface{}) {
+	rl, ok := w.(logging.ResponseLogger)
+	if !ok {
+		return
+	}
+
+	logFields := map[string]interface{}{
+		"acme-operation":  "new-order",
+		"new-order-stage": stage,
+	}
+	if err != nil {
+		logFields["new-order-error"] = err.Error()
+		if cause := errors.Cause(err); cause != nil && cause.Error() != err.Error() {
+			logFields["new-order-original-error"] = cause.Error()
+		}
+	}
+	if acc != nil {
+		logFields["account-id"] = acc.ID
+	}
+	if prov != nil {
+		logFields["provisioner-type"] = fmt.Sprintf("%T", prov)
+		if acmeProv, ok := prov.(*provisioner.ACME); ok {
+			logFields["provisioner-id"] = acmeProv.GetID()
+			logFields["provisioner-name"] = acmeProv.GetName()
+		}
+	}
+	if nor != nil {
+		logFields["new-order-identifiers"] = newOrderIdentifiersForLog(nor.Identifiers)
+		logFields["new-order-identifier-count"] = len(nor.Identifiers)
+		logFields["new-order-not-before"] = nor.NotBefore
+		logFields["new-order-not-after"] = nor.NotAfter
+	}
+	for key, value := range fields {
+		logFields[key] = value
+	}
+	rl.WithFields(logFields)
+}
+
+func externalAccountKeyLogFields(eak *acme.ExternalAccountKey) map[string]interface{} {
+	fields := make(map[string]interface{})
+	if eak != nil {
+		fields["external-account-key-id"] = eak.ID
+	}
+	return fields
+}
+
+func newOrderIdentifiersForLog(identifiers []acme.Identifier) []map[string]string {
+	out := make([]map[string]string, len(identifiers))
+	for i, identifier := range identifiers {
+		out[i] = identifierForLog(identifier)
+	}
+	return out
+}
+
+func identifierForLog(identifier acme.Identifier) map[string]string {
+	return map[string]string{
+		"type":  string(identifier.Type),
+		"value": identifier.Value,
+	}
 }
 
 func isIdentifierAllowed(acmePolicy policy.X509Policy, identifier acme.Identifier) error {
