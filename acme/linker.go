@@ -46,6 +46,8 @@ const (
 	RevokeCertLinkType
 	// KeyChangeLinkType key rollover
 	KeyChangeLinkType
+	// RenewalInfoLinkType renewal info (RFC 9773)
+	RenewalInfoLinkType
 )
 
 func (l LinkType) String() string {
@@ -74,6 +76,8 @@ func (l LinkType) String() string {
 		return "revoke-cert"
 	case KeyChangeLinkType:
 		return "key-change"
+	case RenewalInfoLinkType:
+		return "renewal-info"
 	default:
 		return fmt.Sprintf("unexpected LinkType '%d'", int(l))
 	}
@@ -89,6 +93,13 @@ func GetUnescapedPathSuffix(typ LinkType, provisionerName string, inputs ...stri
 		return fmt.Sprintf("/%s/%s/%s/%s", provisionerName, typ, inputs[0], inputs[1]) //nolint:gosec // operating on internally defined inputs
 	case OrdersByAccountLinkType:
 		return fmt.Sprintf("/%s/%s/%s/orders", provisionerName, AccountLinkType, inputs[0])
+	case RenewalInfoLinkType:
+		// The directory lists the bare renewal-info URL; clients append the
+		// certID as an extra path segment (RFC 9773).
+		if len(inputs) > 0 {
+			return fmt.Sprintf("/%s/%s/%s", provisionerName, typ, inputs[0])
+		}
+		return fmt.Sprintf("/%s/%s", provisionerName, typ)
 	case FinalizeLinkType:
 		return fmt.Sprintf("/%s/%s/%s/finalize", provisionerName, OrderLinkType, inputs[0])
 	default:

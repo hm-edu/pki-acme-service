@@ -1944,7 +1944,7 @@ MCowBQYDK2VwAyEA5c+4NKZSNQcR1T8qN6SjwgdPZQ0Ge12Ylx/YeGAJ35k=
 			b, err := json.Marshal(nor)
 			assert.FatalError(t, err)
 			ctx := acme.NewProvisionerContext(context.Background(), prov)
-			ctx = context.WithValue(ctx, accContextKey, acc)
+			ctx = context.WithValue(ctx, AccContextKey, acc)
 			ctx = context.WithValue(ctx, payloadContextKey, &payloadInfo{value: b})
 			var (
 				ch1, ch2, ch3 **acme.Challenge

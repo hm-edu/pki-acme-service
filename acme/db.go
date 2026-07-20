@@ -46,6 +46,10 @@ type DB interface {
 	GetCertificate(ctx context.Context, id string) (*Certificate, error)
 	GetCertificateBySerial(ctx context.Context, serial string) (*Certificate, error)
 
+	SaveRenewalInfoOverride(ctx context.Context, o *RenewalInfoOverride) error
+	GetRenewalInfoOverride(ctx context.Context, serial string) (*RenewalInfoOverride, error)
+	DeleteRenewalInfoOverride(ctx context.Context, serial string) error
+
 	CreateChallenge(ctx context.Context, ch *Challenge) error
 	GetChallenge(ctx context.Context, id, authzID string) (*Challenge, error)
 	UpdateChallenge(ctx context.Context, ch *Challenge) error
@@ -122,6 +126,10 @@ type MockDB struct {
 	MockCreateCertificate      func(ctx context.Context, cert *Certificate) error
 	MockGetCertificate         func(ctx context.Context, id string) (*Certificate, error)
 	MockGetCertificateBySerial func(ctx context.Context, serial string) (*Certificate, error)
+
+	MockSaveRenewalInfoOverride   func(ctx context.Context, o *RenewalInfoOverride) error
+	MockGetRenewalInfoOverride    func(ctx context.Context, serial string) (*RenewalInfoOverride, error)
+	MockDeleteRenewalInfoOverride func(ctx context.Context, serial string) error
 
 	MockCreateChallenge func(ctx context.Context, ch *Challenge) error
 	MockGetChallenge    func(ctx context.Context, id, authzID string) (*Challenge, error)
@@ -346,6 +354,32 @@ func (m *MockDB) GetCertificateBySerial(ctx context.Context, serial string) (*Ce
 		return nil, m.MockError
 	}
 	return m.MockRet1.(*Certificate), m.MockError
+}
+
+// SaveRenewalInfoOverride mock
+func (m *MockDB) SaveRenewalInfoOverride(ctx context.Context, o *RenewalInfoOverride) error {
+	if m.MockSaveRenewalInfoOverride != nil {
+		return m.MockSaveRenewalInfoOverride(ctx, o)
+	}
+	return m.MockError
+}
+
+// GetRenewalInfoOverride mock
+func (m *MockDB) GetRenewalInfoOverride(ctx context.Context, serial string) (*RenewalInfoOverride, error) {
+	if m.MockGetRenewalInfoOverride != nil {
+		return m.MockGetRenewalInfoOverride(ctx, serial)
+	} else if m.MockError != nil {
+		return nil, m.MockError
+	}
+	return m.MockRet1.(*RenewalInfoOverride), m.MockError
+}
+
+// DeleteRenewalInfoOverride mock
+func (m *MockDB) DeleteRenewalInfoOverride(ctx context.Context, serial string) error {
+	if m.MockDeleteRenewalInfoOverride != nil {
+		return m.MockDeleteRenewalInfoOverride(ctx, serial)
+	}
+	return m.MockError
 }
 
 // CreateChallenge mock

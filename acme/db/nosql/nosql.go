@@ -20,6 +20,7 @@ var (
 	ordersByAccountIDTable                    = []byte("acme_account_orders_index")
 	certTable                                 = []byte("acme_certs")
 	certBySerialTable                         = []byte("acme_serial_certs_index")
+	renewalInfoOverrideTable                  = []byte("acme_renewal_info_overrides")
 	externalAccountKeyTable                   = []byte("acme_external_account_keys")
 	externalAccountKeyIDsByReferenceTable     = []byte("acme_external_account_keyID_reference_index")
 	externalAccountKeyIDsByProvisionerIDTable = []byte("acme_external_account_keyID_provisionerID_index")
@@ -36,7 +37,7 @@ type DB struct {
 func New(db nosqlDB.DB) (*DB, error) {
 	tables := [][]byte{accountTable, accountByKeyIDTable, authzTable,
 		challengeTable, nonceTable, orderTable, ordersByAccountIDTable,
-		certTable, certBySerialTable, externalAccountKeyTable,
+		certTable, certBySerialTable, renewalInfoOverrideTable, externalAccountKeyTable,
 		externalAccountKeyIDsByReferenceTable, externalAccountKeyIDsByProvisionerIDTable,
 		wireDpopTokenTable, wireOidcTokenTable,
 	}

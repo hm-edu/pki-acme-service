@@ -91,6 +91,11 @@ func Route(r api.Router, options ...RouterOption) {
 	r.MethodFunc("PATCH", "/admins/{id}", authnz(UpdateAdmin))
 	r.MethodFunc("DELETE", "/admins/{id}", authnz(DeleteAdmin))
 
+	// ACME renewal info overrides (RFC 9773 manual renewal windows)
+	r.MethodFunc("POST", "/acme/renewal-info", authnz(SetRenewalInfoOverride))
+	r.MethodFunc("GET", "/acme/renewal-info/{serial}", authnz(GetRenewalInfoOverride))
+	r.MethodFunc("DELETE", "/acme/renewal-info/{serial}", authnz(DeleteRenewalInfoOverride))
+
 	// ACME responder
 	if router.acmeResponder != nil {
 		// ACME External Account Binding Keys
