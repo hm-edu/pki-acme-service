@@ -48,6 +48,7 @@ type DB interface {
 
 	SaveRenewalInfoOverride(ctx context.Context, o *RenewalInfoOverride) error
 	GetRenewalInfoOverride(ctx context.Context, serial string) (*RenewalInfoOverride, error)
+	ListRenewalInfoOverrides(ctx context.Context) ([]*RenewalInfoOverride, error)
 	DeleteRenewalInfoOverride(ctx context.Context, serial string) error
 
 	CreateChallenge(ctx context.Context, ch *Challenge) error
@@ -129,6 +130,7 @@ type MockDB struct {
 
 	MockSaveRenewalInfoOverride   func(ctx context.Context, o *RenewalInfoOverride) error
 	MockGetRenewalInfoOverride    func(ctx context.Context, serial string) (*RenewalInfoOverride, error)
+	MockListRenewalInfoOverrides  func(ctx context.Context) ([]*RenewalInfoOverride, error)
 	MockDeleteRenewalInfoOverride func(ctx context.Context, serial string) error
 
 	MockCreateChallenge func(ctx context.Context, ch *Challenge) error
@@ -372,6 +374,16 @@ func (m *MockDB) GetRenewalInfoOverride(ctx context.Context, serial string) (*Re
 		return nil, m.MockError
 	}
 	return m.MockRet1.(*RenewalInfoOverride), m.MockError
+}
+
+// ListRenewalInfoOverrides mock
+func (m *MockDB) ListRenewalInfoOverrides(ctx context.Context) ([]*RenewalInfoOverride, error) {
+	if m.MockListRenewalInfoOverrides != nil {
+		return m.MockListRenewalInfoOverrides(ctx)
+	} else if m.MockError != nil {
+		return nil, m.MockError
+	}
+	return m.MockRet1.([]*RenewalInfoOverride), m.MockError
 }
 
 // DeleteRenewalInfoOverride mock

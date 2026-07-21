@@ -91,8 +91,12 @@ func Route(r api.Router, options ...RouterOption) {
 	r.MethodFunc("PATCH", "/admins/{id}", authnz(UpdateAdmin))
 	r.MethodFunc("DELETE", "/admins/{id}", authnz(DeleteAdmin))
 
+	// Certificates
+	r.MethodFunc("GET", "/certificates", authnz(GetCertificates))
+
 	// ACME renewal info overrides (RFC 9773 manual renewal windows)
 	r.MethodFunc("POST", "/acme/renewal-info", authnz(SetRenewalInfoOverride))
+	r.MethodFunc("POST", "/acme/renewal-info/batch", authnz(BatchSetRenewalInfoOverride))
 	r.MethodFunc("GET", "/acme/renewal-info/{serial}", authnz(GetRenewalInfoOverride))
 	r.MethodFunc("DELETE", "/acme/renewal-info/{serial}", authnz(DeleteRenewalInfoOverride))
 

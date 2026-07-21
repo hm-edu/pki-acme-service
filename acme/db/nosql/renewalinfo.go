@@ -81,6 +81,28 @@ func (db *DB) GetRenewalInfoOverride(ctx context.Context, serial string) (*acme.
 	}, nil
 }
 
+// ListRenewalInfoOverrides returns all stored manual renewal windows.
+func (db *DB) ListRenewalInfoOverrides(_ context.Context) ([]*acme.RenewalInfoOverride, error) {
+	entries, err := db.db.List(renewalInfoOverrideTable)
+	if err != nil {
+		return nil, errors.Wrap(err, "error listing renewal info overrides")
+	}
+	overrides := make([]*acme.RenewalInfoOverride, 0, len(entries))
+	for _, e := range entries {
+		dbrio := new(dbRenewalInfoOverride)
+		if err := json.Unmarshal(e.Value, dbrio); err != nil {
+			return nil, errors.Wrapf(err, "error unmarshaling renewal info override for serial %s", string(e.Key))
+		}
+		overrides = append(overrides, &acme.RenewalInfoOverride{
+			Serial:         dbrio.Serial,
+			Start:          dbrio.Start,
+			End:            dbrio.End,
+			ExplanationURL: dbrio.ExplanationURL,
+		})
+	}
+	return overrides, nil
+}
+
 // DeleteRenewalInfoOverride removes the manual renewal window for a
 // certificate serial. Deleting a non-existent override is not an error.
 func (db *DB) DeleteRenewalInfoOverride(_ context.Context, serial string) error {

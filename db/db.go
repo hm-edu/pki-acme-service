@@ -498,6 +498,7 @@ type MockAuthDB struct {
 	MGetCertificate         func(serialNumber string) (*x509.Certificate, error)
 	MGetCertificateData     func(serialNumber string) (*CertificateData, error)
 	MStoreCertificate       func(crt *x509.Certificate) error
+	MListCertificates       func(filter *CertificateFilter) ([]*CertificateInfo, error)
 	MUseToken               func(id, tok string) (bool, error)
 	MIsSSHHost              func(principal string) (bool, error)
 	MStoreSSHCertificate    func(crt *ssh.Certificate) error
@@ -602,6 +603,17 @@ func (m *MockAuthDB) StoreCertificate(crt *x509.Certificate) error {
 		return m.MStoreCertificate(crt)
 	}
 	return m.Err
+}
+
+// ListCertificates mock.
+func (m *MockAuthDB) ListCertificates(filter *CertificateFilter) ([]*CertificateInfo, error) {
+	if m.MListCertificates != nil {
+		return m.MListCertificates(filter)
+	}
+	if certs, ok := m.Ret1.([]*CertificateInfo); ok {
+		return certs, m.Err
+	}
+	return nil, m.Err
 }
 
 // IsSSHHost mock.
