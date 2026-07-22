@@ -23,7 +23,7 @@ require (
 	github.com/hashicorp/vault/api/auth/approle v0.12.0
 	github.com/hashicorp/vault/api/auth/aws v0.12.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.12.0
-	github.com/hm-edu/portal-apis v0.0.0-20250102083103-f7750f2a7776
+	github.com/hm-edu/portal-apis v0.0.0-20260722062737-d43882e11746
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/newrelic/go-agent/v3 v3.44.2

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/smallstep/certificates/acme"
@@ -18,8 +19,26 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/smallstep/certificates/cas/apiv1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+)
+
+const (
+	// issueAttempts is the maximum number of tries for the initial issue
+	// request, issueRetryBackoff the base delay between two of them.
+	issueAttempts     = 3
+	issueRetryBackoff = 2 * time.Second
+
+	// collectInterval is the delay between two attempts to collect a
+	// certificate from the PKI backend.
+	collectInterval = 5 * time.Second
+	// collectCallTimeout bounds a single collect RPC so that a terminated
+	// connection surfaces quickly and the next poll can start.
+	collectCallTimeout = 30 * time.Second
+	// collectTimeout bounds the overall time waiting for a certificate.
+	collectTimeout = 15 * time.Minute
 )
 
 type Options struct {
@@ -180,22 +199,95 @@ func (s *SectigoCAS) signCertificate(ctx context.Context, cr *x509.CertificateRe
 	}
 
 	ctxSign, _ := monitoring.WrapSentryTrace(ctx)
-	certificates, err := s.sslServiceClient.IssueCertificate(ctxSign, &pb.IssueSslRequest{
+	response, err := s.issueCertificate(ctxSign, &pb.IssueSslRequest{
 		Issuer:                  issuer,
 		SubjectAlternativeNames: sans,
 		Source:                  "ACME",
 		Csr:                     string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: cr.Raw})),
+		WaitForIssue:            false,
 	})
 	if err != nil {
-		s.logger.WithField("error", err).Error("Failed to sign certificate")
+		s.logger.WithField("error", err).Error("Failed to request certificate")
 		return nil, nil, err
 	}
-	certs, err := parseCertificates([]byte(certificates.Certificate))
+
+	// Old backends issue synchronously and reply with the certificate right
+	// away, new ones only return a transaction id that has to be polled.
+	pemData := response.Certificate
+	if pemData == "" {
+		transactionID := response.TransactionId
+		if transactionID == "" {
+			return nil, nil, errors.New("Backend returned neither a certificate nor a transaction id")
+		}
+		pemData, err = s.collectCertificate(ctxSign, transactionID)
+		if err != nil {
+			s.logger.WithField("error", err).WithField("transaction_id", transactionID).Error("Failed to collect certificate")
+			return nil, nil, err
+		}
+	}
+
+	certs, err := parseCertificates([]byte(pemData))
 	if err != nil {
 		s.logger.WithField("error", err).Error("Failed to parse certificate")
 		return nil, nil, err
 	}
 	return certs[0], certs[1:], nil
+}
+
+// issueCertificate requests a new certificate from the PKI backend. The
+// backend does not wait for the actual issuance, so the request itself is
+// short-lived and a terminated connection can safely be retried before any
+// polling starts.
+func (s *SectigoCAS) issueCertificate(ctx context.Context, req *pb.IssueSslRequest) (*pb.IssueSslResponse, error) {
+	for attempt := 1; ; attempt++ {
+		response, err := s.sslServiceClient.IssueCertificate(ctx, req)
+		if err == nil {
+			return response, nil
+		}
+		if status.Code(err) != codes.Unavailable || attempt >= issueAttempts {
+			return nil, err
+		}
+		s.logger.WithField("error", err).WithField("attempt", attempt).Warn("Requesting certificate failed, retrying")
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(time.Duration(attempt) * issueRetryBackoff):
+		}
+	}
+}
+
+// collectCertificate busy-polls the PKI backend until the certificate was
+// issued. Every poll is a fresh short-lived RPC, so connections that are
+// terminated by proxies or load balancers in between only delay the
+// collection instead of failing the whole signing request.
+func (s *SectigoCAS) collectCertificate(ctx context.Context, transactionID string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, collectTimeout)
+	defer cancel()
+	logger := s.logger.WithField("transaction_id", transactionID)
+	logger.Info("Waiting for certificate issuance")
+	for {
+		callCtx, cancelCall := context.WithTimeout(ctx, collectCallTimeout)
+		response, err := s.sslServiceClient.CollectCertificate(callCtx, &pb.CollectSslRequest{TransactionId: transactionID})
+		cancelCall()
+		if err == nil && response.Certificate != "" {
+			return response.Certificate, nil
+		}
+		if err != nil {
+			switch status.Code(err) {
+			case codes.Unavailable, codes.DeadlineExceeded:
+				// Transient failure (terminated connection, busy backend):
+				// keep polling until the overall deadline is reached.
+				logger.WithField("error", err).Warn("Collecting certificate failed, retrying")
+			default:
+				return "", err
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return "", fmt.Errorf("certificate was not issued in time: %w", ctx.Err())
+		case <-time.After(collectInterval):
+		}
+	}
 }
 
 func (s *SectigoCAS) CreateCertificate(ctx context.Context, req *apiv1.CreateCertificateRequest) (*apiv1.CreateCertificateResponse, error) {
